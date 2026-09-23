@@ -1,6 +1,9 @@
 import AppKit
 import Combine
 import SwiftUI
+import os
+
+let log = Logger(subsystem: "com.ziqq.snaply", category: "app")
 
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
@@ -31,29 +34,30 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             UserDefaults.standard.set(true, forKey: "didOnboard")
             if !ScreenCapturer.hasPermission { CGRequestScreenCaptureAccess() }
         }
+        UpdateChecker.shared.checkInBackgroundIfNeeded()
     }
 
     // MARK: Status item
 
     private func setupStatusItem() {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
-        let image = NSImage(systemSymbolName: "camera.viewfinder", accessibilityDescription: "Snaply")
+        let image = NSImage(systemSymbolName: "camera.viewfinder", accessibilityDescription: AppInfo.name)
         image?.isTemplate = true
         statusItem.button?.image = image
 
         let menu = NSMenu()
         menu.delegate = self
-        areaItem = item("Снимок области", #selector(captureArea), symbol: "rectangle.dashed")
-        fullItem = item("Снимок всего экрана", #selector(captureFull), symbol: "macwindow")
+        areaItem = item(L("menu.captureArea"), #selector(captureArea), symbol: "rectangle.dashed")
+        fullItem = item(L("menu.captureScreen"), #selector(captureFull), symbol: "macwindow")
         menu.addItem(areaItem)
         menu.addItem(fullItem)
         menu.addItem(.separator())
-        menu.addItem(item("История…", #selector(showHistory), key: "h", symbol: "clock"))
-        menu.addItem(item("Открыть папку со снимками", #selector(openFolder), symbol: "folder"))
+        menu.addItem(item(L("menu.history"), #selector(showHistory), key: "h", symbol: "clock"))
+        menu.addItem(item(L("menu.openFolder"), #selector(openFolder), symbol: "folder"))
         menu.addItem(.separator())
-        menu.addItem(item("Настройки…", #selector(showSettings), key: ",", symbol: "gearshape"))
-        menu.addItem(item("О Snaply", #selector(showAbout)))
-        menu.addItem(item("Выйти", #selector(quit), key: "q"))
+        menu.addItem(item(L("menu.settings"), #selector(showSettings), key: ",", symbol: "gearshape"))
+        menu.addItem(item(L("menu.about", AppInfo.name), #selector(showAbout)))
+        menu.addItem(item(L("menu.quit", AppInfo.name), #selector(quit), key: "q"))
         statusItem.menu = menu
     }
 
@@ -101,10 +105,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     private func startCapture(fullScreen: Bool) {
         guard session == nil, !isCapturing else { return }
-        guard ScreenCapturer.hasPermission else {
-            askForPermission()
-            return
-        }
+        log.info("capture requested, preflight=\(ScreenCapturer.hasPermission, privacy: .public)")
         isCapturing = true
         Toast.dismiss(animated: false)
         let frames = ScreenCapturer.windowFrames()
@@ -125,36 +126,33 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                 self.session = session
                 session.begin()
             } catch {
-                if !ScreenCapturer.hasPermission { askForPermission() } else { Exporter.showError(error) }
+                log.error("capture failed: \(String(describing: error), privacy: .public)")
+                askForPermission(error: error)
             }
         }
     }
 
-    private func askForPermission() {
+    private func askForPermission(error: Error) {
         let alert = NSAlert()
-        alert.messageText = "Нужен доступ к записи экрана"
-        alert.informativeText = """
-        Откройте «Системные настройки» → «Конфиденциальность и безопасность» → «Запись экрана и системного звука», \
-        включите Snaply и перезапустите приложение.
-        """
-        alert.addButton(withTitle: "Открыть настройки")
-        alert.addButton(withTitle: "Перезапустить Snaply")
-        alert.addButton(withTitle: "Позже")
+        alert.messageText = L("perm.title")
+        alert.informativeText = L("perm.body", AppInfo.name, error.localizedDescription)
+        alert.addButton(withTitle: L("perm.openSettings"))
+        alert.addButton(withTitle: L("perm.relaunch", AppInfo.name))
+        alert.addButton(withTitle: L("perm.later"))
         NSApp.activate(ignoringOtherApps: true)
         switch alert.runModal() {
         case .alertFirstButtonReturn:
-            CGRequestScreenCaptureAccess()
             if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture") {
                 NSWorkspace.shared.open(url)
             }
         case .alertSecondButtonReturn:
-            relaunch()
+            AppDelegate.relaunch()
         default:
             break
         }
     }
 
-    private func relaunch() {
+    static func relaunch() {
         let task = Process()
         task.executableURL = URL(fileURLWithPath: "/bin/sh")
         task.arguments = ["-c", "sleep 0.5; /usr/bin/open \"\(Bundle.main.bundlePath)\""]
@@ -169,7 +167,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             let w = NSWindow(contentRect: CGRect(x: 0, y: 0, width: 820, height: 560),
                              styleMask: [.titled, .closable, .miniaturizable, .resizable],
                              backing: .buffered, defer: false)
-            w.title = "История снимков"
+            w.title = L("window.history")
             w.contentViewController = NSHostingController(rootView: HistoryView(model: history))
             w.setContentSize(CGSize(width: 820, height: 560))
             w.isReleasedWhenClosed = false
@@ -184,7 +182,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     @objc private func showSettings() {
         if settingsWindow == nil {
             let w = NSWindow(contentViewController: NSHostingController(rootView: SettingsView()))
-            w.title = "Настройки Snaply"
+            w.title = L("window.settings", AppInfo.name)
             w.styleMask = [.titled, .closable]
             w.isReleasedWhenClosed = false
             w.center()
@@ -204,10 +202,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         NSWorkspace.shared.open(folder)
     }
 
-    @objc private func showAbout() {
+    @objc private func showAbout() { AppDelegate.showAboutPanel() }
+
+    static func showAboutPanel() {
         NSApp.activate(ignoringOtherApps: true)
         NSApp.orderFrontStandardAboutPanel(options: [
-            .credits: NSAttributedString(string: "Быстрые скриншоты с аннотациями.\nВсё хранится локально.",
+            .credits: NSAttributedString(string: L("about.tagline"),
                                          attributes: [.font: NSFont.systemFont(ofSize: 11),
                                                       .foregroundColor: NSColor.secondaryLabelColor]),
         ])

@@ -123,19 +123,19 @@ private final class PinView: NSView {
 
     override func menu(for event: NSEvent) -> NSMenu? {
         let menu = NSMenu()
-        menu.addItem(withTitle: "Копировать", action: #selector(copyImage), keyEquivalent: "c").target = self
-        menu.addItem(withTitle: "Сохранить в папку", action: #selector(save), keyEquivalent: "s").target = self
-        menu.addItem(withTitle: "Сохранить как…", action: #selector(saveAs), keyEquivalent: "").target = self
-        menu.addItem(withTitle: "Исходный размер", action: #selector(resetZoom), keyEquivalent: "0").target = self
+        menu.addItem(withTitle: L("action.copy"), action: #selector(copyImage), keyEquivalent: "c").target = self
+        menu.addItem(withTitle: L("action.save"), action: #selector(save), keyEquivalent: "s").target = self
+        menu.addItem(withTitle: L("action.saveAs"), action: #selector(saveAs), keyEquivalent: "").target = self
+        menu.addItem(withTitle: L("pin.actualSize"), action: #selector(resetZoom), keyEquivalent: "0").target = self
         menu.addItem(.separator())
-        menu.addItem(withTitle: "Закрыть", action: #selector(closePin), keyEquivalent: "").target = self
+        menu.addItem(withTitle: L("action.close"), action: #selector(closePin), keyEquivalent: "").target = self
         return menu
     }
 
     @objc private func copyImage() {
         MainActor.assumeIsolated {
             Exporter.copy(panel.image, scale: panel.scale)
-            Exporter.feedback(panel.image, scale: panel.scale, title: "Скопировано в буфер обмена", url: nil)
+            Exporter.feedback(panel.image, scale: panel.scale, title: L("toast.copied"), url: nil)
         }
     }
 

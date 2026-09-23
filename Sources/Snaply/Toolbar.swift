@@ -8,6 +8,8 @@ final class EditorState: ObservableObject {
     @Published var sizeIndex: Int { didSet { Preferences.shared.strokeSize = sizeIndex } }
     @Published var canUndo = false
     @Published var canRedo = false
+    /// Tooltip for the hovered toolbar control, in the toolbar's coordinate space.
+    @Published var hint: ToolbarHint?
 
     init() {
         let prefs = Preferences.shared
@@ -19,6 +21,12 @@ final class EditorState: ObservableObject {
     var width: CGFloat { Palette.widths[sizeIndex] }
     var fontSize: CGFloat { Palette.fontSizes[sizeIndex] }
     var counterRadius: CGFloat { Palette.counterRadii[sizeIndex] }
+}
+
+struct ToolbarHint: Equatable {
+    let title: String
+    let shortcut: String
+    let anchor: CGRect
 }
 
 enum EditorAction {
@@ -35,24 +43,27 @@ struct EditorToolbar: View {
         VStack(alignment: .trailing, spacing: 6) {
             HStack(spacing: 2) {
                 ForEach(Tool.allCases) { tool in
-                    ToolbarButton(icon: tool.icon, help: "\(tool.title)  \(tool.keyLabel)",
-                                  selected: state.tool == tool) {
+                    ToolbarButton(icon: tool.icon, selected: state.tool == tool) {
                         state.tool = tool
                     }
+                    .toolbarHint(tool.title, tool.keyLabel, state)
                 }
                 ToolbarDivider()
-                ToolbarButton(icon: "arrow.uturn.backward", help: "Отменить  ⌘Z", enabled: state.canUndo) {
-                    perform(.undo)
-                }
-                ToolbarButton(icon: "arrow.uturn.forward", help: "Повторить  ⇧⌘Z", enabled: state.canRedo) {
-                    perform(.redo)
-                }
+                ToolbarButton(icon: "arrow.uturn.backward", enabled: state.canUndo) { perform(.undo) }
+                    .toolbarHint(L("action.undo"), "⌘Z", state)
+                ToolbarButton(icon: "arrow.uturn.forward", enabled: state.canRedo) { perform(.redo) }
+                    .toolbarHint(L("action.redo"), "⇧⌘Z", state)
                 ToolbarDivider()
-                ToolbarButton(icon: "pin", help: "Закрепить поверх окон  ⌘P") { perform(.pin) }
-                ToolbarButton(icon: "square.and.arrow.down.on.square", help: "Сохранить как…  ⇧⌘S") { perform(.saveAs) }
-                ToolbarButton(icon: "square.and.arrow.down", help: "Сохранить в папку  ⌘S") { perform(.save) }
-                ToolbarButton(icon: "doc.on.doc", help: "Копировать  ⌘C / ↩", prominent: true) { perform(.copy) }
-                ToolbarButton(icon: "xmark", help: "Закрыть  Esc") { perform(.close) }
+                ToolbarButton(icon: "pin") { perform(.pin) }
+                    .toolbarHint(L("action.pin"), "⌘P", state)
+                ToolbarButton(icon: "square.and.arrow.down.on.square") { perform(.saveAs) }
+                    .toolbarHint(L("action.saveAs"), "⇧⌘S", state)
+                ToolbarButton(icon: "square.and.arrow.down") { perform(.save) }
+                    .toolbarHint(L("action.save"), "⌘S", state)
+                ToolbarButton(icon: "doc.on.doc", prominent: true) { perform(.copy) }
+                    .toolbarHint(L("action.copy"), "⌘C  ↩", state)
+                ToolbarButton(icon: "xmark") { perform(.close) }
+                    .toolbarHint(L("action.close"), "Esc", state)
             }
             .padding(5)
             .hudBackground()
@@ -63,6 +74,7 @@ struct EditorToolbar: View {
                         ColorSwatch(color: Color(nsColor: Palette.colors[i]), selected: state.colorIndex == i) {
                             state.colorIndex = i
                         }
+                        .toolbarHint(L("style.color"), "\(i + 1)", state)
                     }
                     ToolbarDivider()
                     ForEach(Palette.widths.indices, id: \.self) { i in
@@ -70,6 +82,7 @@ struct EditorToolbar: View {
                                 color: Color(nsColor: state.color)) {
                             state.sizeIndex = i
                         }
+                        .toolbarHint(L(["style.thin", "style.medium", "style.thick"][i]), "", state)
                     }
                 }
                 .padding(.horizontal, 8)
@@ -79,6 +92,7 @@ struct EditorToolbar: View {
             }
         }
         .padding(10) // room for shadows
+        .coordinateSpace(name: "toolbar")
         .animation(.easeOut(duration: 0.15), value: state.tool.hasStyle)
         .environment(\.colorScheme, .dark)
     }
@@ -111,7 +125,6 @@ private struct ToolbarDivider: View {
 
 private struct ToolbarButton: View {
     let icon: String
-    let help: String
     var selected = false
     var enabled = true
     var prominent = false
@@ -133,7 +146,6 @@ private struct ToolbarButton: View {
         .focusable(false)
         .disabled(!enabled)
         .onHover { hovering = $0 }
-        .help(help)
     }
 
     private var foreground: Color {
@@ -142,7 +154,7 @@ private struct ToolbarButton: View {
     }
 
     private var background: Color {
-        if selected || prominent { return Color.accentColor.opacity(hovering ? 1 : 0.88) }
+        if selected || prominent { return Theme.accentColor.opacity(hovering ? 1 : 0.88) }
         return hovering && enabled ? .white.opacity(0.12) : .clear
     }
 }
@@ -188,5 +200,36 @@ private struct SizeDot: View {
         }
         .buttonStyle(.plain)
         .focusable(false)
+    }
+}
+
+// MARK: - Hints
+
+private struct HintModifier: ViewModifier {
+    let title: String
+    let shortcut: String
+    @ObservedObject var state: EditorState
+    @State private var frame: CGRect = .zero
+
+    func body(content: Content) -> some View {
+        content
+            .background(GeometryReader { geo in
+                Color.clear
+                    .onAppear { frame = geo.frame(in: .named("toolbar")) }
+                    .onChange(of: geo.frame(in: .named("toolbar"))) { _, new in frame = new }
+            })
+            .onHover { inside in
+                if inside {
+                    state.hint = ToolbarHint(title: title, shortcut: shortcut, anchor: frame)
+                } else if state.hint?.anchor == frame {
+                    state.hint = nil
+                }
+            }
+    }
+}
+
+extension View {
+    func toolbarHint(_ title: String, _ shortcut: String, _ state: EditorState) -> some View {
+        modifier(HintModifier(title: title, shortcut: shortcut, state: state))
     }
 }

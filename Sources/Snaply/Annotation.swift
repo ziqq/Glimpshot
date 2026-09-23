@@ -25,16 +25,16 @@ enum Tool: String, CaseIterable, Identifiable {
 
     var title: String {
         switch self {
-        case .select: "Перемещение"
-        case .pen: "Карандаш"
-        case .line: "Линия"
-        case .arrow: "Стрелка"
-        case .rect: "Прямоугольник"
-        case .ellipse: "Эллипс"
-        case .marker: "Маркер"
-        case .text: "Текст"
-        case .pixelate: "Пикселизация"
-        case .counter: "Нумерация"
+        case .select: L("tool.select")
+        case .pen: L("tool.pen")
+        case .line: L("tool.line")
+        case .arrow: L("tool.arrow")
+        case .rect: L("tool.rect")
+        case .ellipse: L("tool.ellipse")
+        case .marker: L("tool.marker")
+        case .text: L("tool.text")
+        case .pixelate: L("tool.pixelate")
+        case .counter: L("tool.counter")
         }
     }
 

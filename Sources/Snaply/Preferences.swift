@@ -107,6 +107,18 @@ final class Preferences: ObservableObject {
     @Published var fullShortcut: Shortcut? { didSet { store(fullShortcut, "fullShortcut") } }
     @Published var colorIndex: Int { didSet { defaults.set(colorIndex, forKey: "colorIndex") } }
     @Published var strokeSize: Int { didSet { defaults.set(strokeSize, forKey: "strokeSize") } }
+    @Published var accentIndex: Int { didSet { defaults.set(accentIndex, forKey: "accentIndex") } }
+    @Published var autoCheckUpdates: Bool { didSet { defaults.set(autoCheckUpdates, forKey: "autoCheckUpdates") } }
+    /// "" = follow the system. Applied on next launch via AppleLanguages.
+    @Published var language: String {
+        didSet {
+            defaults.set(language, forKey: "language")
+            if language.isEmpty { defaults.removeObject(forKey: "AppleLanguages") }
+            else { defaults.set([language], forKey: "AppleLanguages") }
+        }
+    }
+    /// Language the running process actually started with.
+    let launchLanguage: String
 
     /// True while a shortcut recorder is listening — global hotkeys are paused.
     @Published var isRecordingShortcut = false
@@ -126,6 +138,9 @@ final class Preferences: ObservableObject {
             "showPreview": true,
             "colorIndex": 0,
             "strokeSize": 1,
+            "accentIndex": -1,
+            "autoCheckUpdates": true,
+            "language": "",
         ])
         saveFolder = d.string(forKey: "saveFolder").map { URL(fileURLWithPath: $0, isDirectory: true) }
             ?? Preferences.defaultFolder
@@ -136,6 +151,10 @@ final class Preferences: ObservableObject {
         showPreview = d.bool(forKey: "showPreview")
         colorIndex = d.integer(forKey: "colorIndex")
         strokeSize = d.integer(forKey: "strokeSize")
+        accentIndex = d.integer(forKey: "accentIndex")
+        autoCheckUpdates = d.bool(forKey: "autoCheckUpdates")
+        language = d.string(forKey: "language") ?? ""
+        launchLanguage = d.string(forKey: "language") ?? ""
         areaShortcut = Preferences.load("areaShortcut") ?? .defaultArea
         fullShortcut = Preferences.load("fullShortcut") ?? .defaultFull
     }

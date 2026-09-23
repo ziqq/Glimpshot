@@ -92,7 +92,7 @@ private struct ToastView: View {
                     .lineLimit(1)
                     .truncationMode(.middle)
                 if url != nil {
-                    Text("Нажмите, чтобы показать в Finder")
+                    Text(L("toast.reveal"))
                         .font(.system(size: 10.5))
                         .foregroundStyle(.tertiary)
                 }

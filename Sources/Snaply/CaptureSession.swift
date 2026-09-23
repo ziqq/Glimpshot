@@ -63,7 +63,7 @@ final class CaptureSession {
         switch action {
         case .copy:
             Exporter.copy(image, scale: scale)
-            Exporter.feedback(image, scale: scale, title: "Скопировано в буфер обмена", url: nil)
+            Exporter.feedback(image, scale: scale, title: L("toast.copied"), url: nil)
         case .save:
             Exporter.saveToFolder(image, scale: scale)
         case .saveAs:
@@ -117,7 +117,7 @@ enum Exporter {
         let f = DateFormatter()
         f.locale = Locale(identifier: "en_US_POSIX")
         f.dateFormat = "yyyy-MM-dd 'at' HH.mm.ss"
-        let base = "Snaply \(f.string(from: Date()))"
+        let base = "\(AppInfo.name) \(f.string(from: Date()))"
         var url = folder.appendingPathComponent("\(base).\(ext)")
         var i = 2
         while FileManager.default.fileExists(atPath: url.path) {
@@ -145,7 +145,7 @@ enum Exporter {
         do {
             try write(image, scale: scale, to: url)
             if prefs.copyOnSave { copy(image, scale: scale) }
-            feedback(image, scale: scale, title: prefs.copyOnSave ? "Сохранено и скопировано" : "Сохранено", url: url)
+            feedback(image, scale: scale, title: prefs.copyOnSave ? L("toast.savedCopied") : L("toast.saved"), url: url)
         } catch {
             showError(error)
         }
@@ -162,7 +162,7 @@ enum Exporter {
         guard panel.runModal() == .OK, let url = panel.url else { return }
         do {
             try write(image, scale: scale, to: url)
-            feedback(image, scale: scale, title: "Сохранено", url: url)
+            feedback(image, scale: scale, title: L("toast.saved"), url: url)
         } catch {
             showError(error)
         }

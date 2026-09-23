@@ -60,7 +60,7 @@ final class HistoryModel: ObservableObject {
     func copy(_ item: HistoryItem) {
         guard let (image, scale) = HistoryModel.loadImage(item.url) else { return }
         Exporter.copy(image, scale: scale)
-        Exporter.feedback(image, scale: scale, title: "Скопировано в буфер обмена", url: item.url)
+        Exporter.feedback(image, scale: scale, title: L("toast.copied"), url: item.url)
     }
 
     func pin(_ item: HistoryItem) {
@@ -122,21 +122,21 @@ struct HistoryView: View {
         VStack(spacing: 0) {
             HStack(spacing: 10) {
                 Image(systemName: "magnifyingglass").foregroundStyle(.secondary)
-                TextField("Поиск по имени", text: $model.query)
+                TextField(L("history.search"), text: $model.query)
                     .textFieldStyle(.plain)
                 Spacer()
                 Text(countLabel).font(.callout).foregroundStyle(.secondary)
                 Button {
                     NSWorkspace.shared.open(prefs.saveFolder)
                 } label: {
-                    Label("Открыть папку", systemImage: "folder")
+                    Label(L("history.openFolder"), systemImage: "folder")
                 }
                 Button {
                     model.reload()
                 } label: {
                     Image(systemName: "arrow.clockwise")
                 }
-                .help("Обновить")
+                .help(L("history.refresh"))
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 10)
@@ -145,11 +145,11 @@ struct HistoryView: View {
 
             if model.filtered.isEmpty {
                 ContentUnavailableView {
-                    Label(model.items.isEmpty ? "Пока пусто" : "Ничего не найдено", systemImage: "photo.on.rectangle.angled")
+                    Label(model.items.isEmpty ? L("history.empty") : L("history.noResults"), systemImage: "photo.on.rectangle.angled")
                 } description: {
                     Text(model.items.isEmpty
-                         ? "Сохранённые снимки из \(prefs.saveFolder.abbreviatedPath) появятся здесь."
-                         : "Попробуйте другой запрос.")
+                         ? L("history.emptyDesc", prefs.saveFolder.abbreviatedPath)
+                         : L("history.tryAnother"))
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
@@ -164,17 +164,12 @@ struct HistoryView: View {
             }
         }
         .frame(minWidth: 520, minHeight: 360)
+        .tint(Theme.accentColor)
         .onAppear { model.reload() }
         .onChange(of: prefs.saveFolder) { _, _ in model.reload() }
     }
 
-    private var countLabel: String {
-        let n = model.items.count
-        let mod10 = n % 10, mod100 = n % 100
-        let word = mod10 == 1 && mod100 != 11 ? "снимок"
-            : (2...4).contains(mod10) && !(12...14).contains(mod100) ? "снимка" : "снимков"
-        return "\(n) \(word)"
-    }
+    private var countLabel: String { L("history.count", model.items.count) }
 }
 
 private struct HistoryCard: View {
@@ -188,17 +183,17 @@ private struct HistoryCard: View {
                 .frame(height: 140)
                 .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
                 .overlay(RoundedRectangle(cornerRadius: 10, style: .continuous)
-                    .strokeBorder(hovering ? Color.accentColor : Color.primary.opacity(0.08),
+                    .strokeBorder(hovering ? Theme.accentColor : Color.primary.opacity(0.08),
                                   lineWidth: hovering ? 2 : 1))
                 .overlay(alignment: .topTrailing) {
                     if hovering {
                         HStack(spacing: 4) {
-                            CardButton(icon: "doc.on.doc", help: "Копировать") { model.copy(item) }
-                            CardButton(icon: "pin", help: "Закрепить") { model.pin(item) }
-                            CardButton(icon: "folder", help: "Показать в Finder") {
+                            CardButton(icon: "doc.on.doc", help: L("action.copy")) { model.copy(item) }
+                            CardButton(icon: "pin", help: L("action.pin")) { model.pin(item) }
+                            CardButton(icon: "folder", help: L("history.reveal")) {
                                 NSWorkspace.shared.activateFileViewerSelecting([item.url])
                             }
-                            CardButton(icon: "trash", help: "В корзину") { model.trash(item) }
+                            CardButton(icon: "trash", help: L("history.trash")) { model.trash(item) }
                         }
                         .padding(6)
                     }
@@ -217,12 +212,12 @@ private struct HistoryCard: View {
         .onTapGesture(count: 2) { NSWorkspace.shared.open(item.url) }
         .onDrag { NSItemProvider(contentsOf: item.url) ?? NSItemProvider() }
         .contextMenu {
-            Button("Открыть") { NSWorkspace.shared.open(item.url) }
-            Button("Копировать") { model.copy(item) }
-            Button("Закрепить поверх окон") { model.pin(item) }
-            Button("Показать в Finder") { NSWorkspace.shared.activateFileViewerSelecting([item.url]) }
+            Button(L("history.open")) { NSWorkspace.shared.open(item.url) }
+            Button(L("action.copy")) { model.copy(item) }
+            Button(L("action.pin")) { model.pin(item) }
+            Button(L("history.reveal")) { NSWorkspace.shared.activateFileViewerSelecting([item.url]) }
             Divider()
-            Button("Переместить в корзину", role: .destructive) { model.trash(item) }
+            Button(L("history.trash"), role: .destructive) { model.trash(item) }
         }
     }
 }

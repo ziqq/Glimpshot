@@ -5,37 +5,56 @@ import SwiftUI
 
 struct SettingsView: View {
     @ObservedObject private var prefs = Preferences.shared
+    @ObservedObject private var updates = UpdateChecker.shared
     @State private var launchAtLogin = SMAppService.mainApp.status == .enabled
 
     var body: some View {
         Form {
-            Section("Горячие клавиши") {
-                LabeledContent("Снимок области") { ShortcutRecorder(shortcut: $prefs.areaShortcut) }
-                LabeledContent("Снимок всего экрана") { ShortcutRecorder(shortcut: $prefs.fullShortcut) }
+            aboutHeader
+
+            Section(L("settings.hotkeys")) {
+                LabeledContent(L("menu.captureArea")) { ShortcutRecorder(shortcut: $prefs.areaShortcut) }
+                LabeledContent(L("menu.captureScreen")) { ShortcutRecorder(shortcut: $prefs.fullShortcut) }
             }
 
-            Section("Сохранение") {
-                LabeledContent("Папка") {
+            Section(L("settings.saving")) {
+                LabeledContent(L("settings.folder")) {
                     HStack(spacing: 8) {
                         Text(prefs.saveFolder.abbreviatedPath)
                             .lineLimit(1)
                             .truncationMode(.middle)
                             .foregroundStyle(.secondary)
-                        Button("Выбрать…", action: chooseFolder)
+                        Button(L("settings.choose"), action: chooseFolder)
                     }
                 }
-                Picker("Формат", selection: $prefs.format) {
+                Picker(L("settings.format"), selection: $prefs.format) {
                     ForEach(ImageFormat.allCases) { Text($0.title).tag($0) }
                 }
                 .pickerStyle(.segmented)
-                Toggle("Копировать в буфер при сохранении", isOn: $prefs.copyOnSave)
+                Toggle(L("settings.copyOnSave"), isOn: $prefs.copyOnSave)
             }
 
-            Section("Поведение") {
-                Toggle("Звук затвора", isOn: $prefs.playSound)
-                Toggle("Лупа при выделении", isOn: $prefs.showLoupe)
-                Toggle("Превью в углу после снимка", isOn: $prefs.showPreview)
-                Toggle("Запускать при входе в систему", isOn: $launchAtLogin)
+            Section(L("settings.appearance")) {
+                LabeledContent(L("settings.accent")) { AccentPicker(selection: $prefs.accentIndex) }
+                Picker(L("settings.language"), selection: $prefs.language) {
+                    Text(L("settings.languageSystem")).tag("")
+                    Divider()
+                    ForEach(AppLanguage.all) { Text($0.name).tag($0.code) }
+                }
+                if prefs.language != prefs.launchLanguage {
+                    HStack {
+                        Text(L("settings.languageRestart")).foregroundStyle(.secondary)
+                        Spacer()
+                        Button(L("settings.relaunchNow")) { AppDelegate.relaunch() }
+                    }
+                }
+            }
+
+            Section(L("settings.behavior")) {
+                Toggle(L("settings.sound"), isOn: $prefs.playSound)
+                Toggle(L("settings.loupe"), isOn: $prefs.showLoupe)
+                Toggle(L("settings.preview"), isOn: $prefs.showPreview)
+                Toggle(L("settings.launchAtLogin"), isOn: $launchAtLogin)
                     .onChange(of: launchAtLogin) { _, enabled in
                         do {
                             if enabled { try SMAppService.mainApp.register() } else { try SMAppService.mainApp.unregister() }
@@ -45,23 +64,75 @@ struct SettingsView: View {
                     }
             }
 
-            Section("Клавиши в редакторе") {
+            Section(L("settings.updates")) {
+                Toggle(L("updates.auto"), isOn: $prefs.autoCheckUpdates)
+                HStack(spacing: 10) {
+                    Button(L("updates.checkNow")) { Task { await updates.check() } }
+                        .disabled(updates.state == .checking)
+                    updateStatus
+                    Spacer()
+                }
+            }
+
+            Section(L("settings.editorKeys")) {
                 VStack(alignment: .leading, spacing: 6) {
-                    hint("↩  ⌘C", "копировать и закрыть")
-                    hint("⌘S  ⇧⌘S", "сохранить в папку / как…")
-                    hint("⌘P", "закрепить поверх окон")
-                    hint("⌘Z  ⇧⌘Z", "отменить / повторить")
-                    hint("V P L A R O M T B N", "инструменты")
-                    hint("1…9", "цвет")
-                    hint("⇧ + рисование", "ровные линии, квадрат, круг")
-                    hint("← ↑ → ↓", "сдвиг рамки (⇧ ×10, ⌥ — размер)")
+                    hint("↩  ⌘C", L("hint.copy"))
+                    hint("⌘S  ⇧⌘S", L("hint.save"))
+                    hint("⌘P", L("hint.pin"))
+                    hint("⌘Z  ⇧⌘Z", L("hint.undo"))
+                    hint("V P L A R O M T B N", L("hint.tools"))
+                    hint("1…9", L("hint.colors"))
+                    hint(L("hint.shiftKeys"), L("hint.shift"))
+                    hint("← ↑ → ↓", L("hint.arrows"))
                 }
                 .font(.callout)
             }
         }
         .formStyle(.grouped)
-        .frame(width: 480)
-        .fixedSize(horizontal: false, vertical: true)
+        .tint(Theme.accentColor)
+        .frame(width: 500)
+        .frame(minHeight: 560, idealHeight: 720)
+    }
+
+    private var aboutHeader: some View {
+        Section {
+            HStack(spacing: 14) {
+                Image(nsImage: NSApp.applicationIconImage)
+                    .resizable()
+                    .frame(width: 56, height: 56)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(AppInfo.name).font(.title2.weight(.semibold))
+                    Text(L("about.version", AppInfo.version)).foregroundStyle(.secondary)
+                    Text(L("about.tagline")).font(.callout).foregroundStyle(.secondary)
+                }
+                Spacer()
+                VStack(alignment: .trailing, spacing: 6) {
+                    Button(L("menu.about", AppInfo.name)) { AppDelegate.showAboutPanel() }
+                    Button(L("menu.quit", AppInfo.name), role: .destructive) { NSApp.terminate(nil) }
+                }
+            }
+            .padding(.vertical, 4)
+        }
+    }
+
+    @ViewBuilder
+    private var updateStatus: some View {
+        switch updates.state {
+        case .idle:
+            EmptyView()
+        case .checking:
+            ProgressView().controlSize(.small)
+            Text(L("updates.checking")).foregroundStyle(.secondary)
+        case .upToDate:
+            Label(L("updates.upToDate", AppInfo.version), systemImage: "checkmark.circle.fill")
+                .foregroundStyle(.secondary)
+        case let .available(version, url):
+            Text(L("updates.available", version)).foregroundStyle(Theme.accentColor)
+            Button(L("updates.download")) { NSWorkspace.shared.open(url) }
+        case .failed:
+            Label(L("updates.failed"), systemImage: "exclamationmark.triangle")
+                .foregroundStyle(.secondary)
+        }
     }
 
     private func hint(_ keys: String, _ text: String) -> some View {
@@ -77,10 +148,42 @@ struct SettingsView: View {
         panel.canChooseFiles = false
         panel.canCreateDirectories = true
         panel.directoryURL = prefs.saveFolder
-        panel.prompt = "Выбрать"
+        panel.prompt = L("settings.choose")
         if panel.runModal() == .OK, let url = panel.url {
             prefs.saveFolder = url
         }
+    }
+}
+
+private struct AccentPicker: View {
+    @Binding var selection: Int
+
+    var body: some View {
+        HStack(spacing: 6) {
+            swatch(index: -1, fill: AnyShapeStyle(AngularGradient(
+                colors: [.red, .orange, .yellow, .green, .blue, .purple, .red], center: .center)))
+                .help(L("settings.languageSystem"))
+            ForEach(Theme.accents.indices, id: \.self) { i in
+                swatch(index: i, fill: AnyShapeStyle(Color(nsColor: Theme.accents[i])))
+            }
+        }
+    }
+
+    private func swatch(index: Int, fill: AnyShapeStyle) -> some View {
+        Button {
+            selection = index
+        } label: {
+            ZStack {
+                Circle().fill(fill).frame(width: 16, height: 16)
+                if selection == index {
+                    Circle().fill(Color.white).frame(width: 6, height: 6)
+                }
+            }
+            .frame(width: 22, height: 22)
+            .overlay(Circle().strokeBorder(Color.primary.opacity(selection == index ? 0.35 : 0), lineWidth: 1.5))
+            .contentShape(Circle())
+        }
+        .buttonStyle(.plain)
     }
 }
 
@@ -92,10 +195,10 @@ struct ShortcutRecorder: View {
     var body: some View {
         HStack(spacing: 6) {
             Button(action: toggle) {
-                Text(recording ? "Нажмите сочетание…" : shortcut?.displayString ?? "Не задано")
+                Text(recording ? L("recorder.prompt") : shortcut?.displayString ?? L("recorder.none"))
                     .font(.system(size: 12, weight: .medium, design: .rounded))
                     .frame(minWidth: 130)
-                    .foregroundStyle(recording ? Color.accentColor : .primary)
+                    .foregroundStyle(recording ? Theme.accentColor : .primary)
             }
             if shortcut != nil && !recording {
                 Button {
@@ -104,7 +207,7 @@ struct ShortcutRecorder: View {
                     Image(systemName: "xmark.circle.fill").foregroundStyle(.tertiary)
                 }
                 .buttonStyle(.plain)
-                .help("Отключить")
+                .help(L("recorder.clear"))
             }
         }
         .onDisappear(perform: stop)

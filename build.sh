@@ -30,6 +30,7 @@ mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 cp ".build/arm64-apple-macosx/release/Snaply" "$APP/Contents/MacOS/Snaply"
 cp Resources/Info.plist "$APP/Contents/Info.plist"
 cp "$ICON" "$APP/Contents/Resources/AppIcon.icns"
+cp -R Resources/*.lproj "$APP/Contents/Resources/"
 
 # A stable identity keeps the Screen Recording permission across rebuilds; ad-hoc resets it every time.
 # Default: Anton Ustinov's valid Apple Development cert, referenced by SHA-1 (an expired twin shares its name).

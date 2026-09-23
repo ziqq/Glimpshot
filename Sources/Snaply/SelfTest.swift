@@ -1,4 +1,5 @@
 import AppKit
+import SwiftUI
 import Carbon.HIToolbox
 
 /// `Snaply --selftest <dir>`: drives the editor with synthetic input on a fake desktop
@@ -22,7 +23,8 @@ enum SelfTest {
         let windowRect = CGRect(x: 180, y: 140, width: 640, height: 420)
 
         let session = CaptureSession(snapshots: [], windowFrames: [], onEnd: {})
-        let window = OverlayWindow(snapshot: snapshot, windowRects: [windowRect], editor: EditorState(), session: session)
+        let editor = EditorState()
+        let window = OverlayWindow(snapshot: snapshot, windowRects: [windowRect], editor: editor, session: session)
         let view = window.overlay
         window.orderFrontRegardless()
 
@@ -77,6 +79,10 @@ enum SelfTest {
         (window.firstResponder as? NSTextView)?.insertText("Привет, Snaply!", replacementRange: NSRange(location: NSNotFound, length: 0))
         view.mouseMoved(with: ev(.mouseMoved, CGPoint(x: 900, y: 600)))
 
+        // Hover the arrow tool button (4th control in the main bar).
+        editor.hint = ToolbarHint(title: Tool.arrow.title, shortcut: Tool.arrow.keyLabel,
+                                  anchor: CGRect(x: 15 + 32 * 3, y: 15, width: 30, height: 30))
+
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
             save(view, dir.appendingPathComponent("2-editor.png"))
             view.commitText()
@@ -84,6 +90,15 @@ enum SelfTest {
                 let url = dir.appendingPathComponent("3-export.png")
                 _ = try? Exporter.write(out, scale: scale, to: url)
                 print("export \(out.width)x\(out.height) -> \(url.path)")
+            }
+            let settings = NSHostingView(rootView: SettingsView())
+            settings.frame = CGRect(x: 0, y: 0, width: 500, height: 1100)
+            let sw = NSWindow(contentRect: settings.frame, styleMask: [.titled], backing: .buffered, defer: false)
+            sw.contentView = settings
+            settings.layoutSubtreeIfNeeded()
+            if let rep = settings.bitmapImageRepForCachingDisplay(in: settings.bounds) {
+                settings.cacheDisplay(in: settings.bounds, to: rep)
+                try? rep.representation(using: .png, properties: [:])?.write(to: dir.appendingPathComponent("4-settings.png"))
             }
             print("selftest done")
             withExtendedLifetime(session) {}

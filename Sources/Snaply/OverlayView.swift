@@ -528,10 +528,13 @@ final class OverlayView: NSView, NSTextViewDelegate {
             ctx.fill(bounds)
         }
 
-        if selection == nil, let hover = hoverRect {
-            ctx.setStrokeColor(NSColor.controlAccentColor.cgColor)
-            ctx.setLineWidth(3)
-            ctx.stroke(hover.insetBy(dx: 1.5, dy: 1.5))
+        // Outline the hovered window — but not a (near) full-screen one, where it would just frame the display.
+        if selection == nil, let hover = hoverRect,
+           hover.width < bounds.width * 0.92 || hover.height < bounds.height * 0.92 {
+            ctx.setStrokeColor(Theme.accent.cgColor)
+            ctx.setLineWidth(2)
+            ctx.addPath(CGPath(roundedRect: hover.insetBy(dx: 1, dy: 1), cornerWidth: 8, cornerHeight: 8, transform: nil))
+            ctx.strokePath()
         }
 
         if let sel = selection {
@@ -544,6 +547,9 @@ final class OverlayView: NSView, NSTextViewDelegate {
 
             drawSelectionChrome(sel, in: ctx)
             drawSizeLabel(for: sel, in: ctx)
+            if let hint = editor.hint, !toolbar.isHidden {
+                drawTooltip(hint, in: ctx)
+            }
         } else if mouse != nil {
             drawHint(in: ctx)
         }
@@ -567,7 +573,7 @@ final class OverlayView: NSView, NSTextViewDelegate {
             let r = CGRect(x: c.x - 4.5, y: c.y - 4.5, width: 9, height: 9)
             ctx.setFillColor(NSColor.white.cgColor)
             ctx.fillEllipse(in: r)
-            ctx.setStrokeColor(NSColor.controlAccentColor.cgColor)
+            ctx.setStrokeColor(Theme.accent.cgColor)
             ctx.setLineWidth(1.5)
             ctx.strokeEllipse(in: r.insetBy(dx: 0.75, dy: 0.75))
         }
@@ -587,6 +593,32 @@ final class OverlayView: NSView, NSTextViewDelegate {
         return rect
     }
 
+    private func drawTooltip(_ hint: ToolbarHint, in ctx: CGContext) {
+        let title = NSMutableAttributedString(string: hint.title, attributes: [
+            .font: NSFont.systemFont(ofSize: 12, weight: .semibold), .foregroundColor: NSColor.white,
+        ])
+        if !hint.shortcut.isEmpty {
+            title.append(NSAttributedString(string: "   " + hint.shortcut, attributes: [
+                .font: NSFont.systemFont(ofSize: 11.5, weight: .medium),
+                .foregroundColor: NSColor.white.withAlphaComponent(0.55),
+            ]))
+        }
+        let size = title.size()
+        let anchor = hint.anchor.offsetBy(dx: toolbar.frame.minX, dy: toolbar.frame.minY)
+        var rect = CGRect(x: anchor.midX - (size.width + 20) / 2, y: anchor.minY - size.height - 10 - 14,
+                          width: size.width + 20, height: size.height + 10)
+        if rect.minY < 2 { rect.origin.y = anchor.maxY + 14 }
+        rect.origin.x = min(max(rect.minX, 4), bounds.width - rect.width - 4)
+
+        ctx.saveGState()
+        ctx.setShadow(offset: CGSize(width: 0, height: -2), blur: 8, color: NSColor.black.withAlphaComponent(0.4).cgColor)
+        ctx.setFillColor(NSColor(white: 0.08, alpha: 0.95).cgColor)
+        ctx.addPath(CGPath(roundedRect: rect, cornerWidth: 8, cornerHeight: 8, transform: nil))
+        ctx.fillPath()
+        ctx.restoreGState()
+        title.draw(at: CGPoint(x: rect.minX + 10, y: rect.minY + 5))
+    }
+
     private func drawSizeLabel(for sel: CGRect, in ctx: CGContext) {
         let s = snapshot.scale
         let text = "\(Int((sel.width * s).rounded())) × \(Int((sel.height * s).rounded()))"
@@ -598,7 +630,7 @@ final class OverlayView: NSView, NSTextViewDelegate {
     }
 
     private func drawHint(in ctx: CGContext) {
-        let text = "Выделите область или кликните по окну  ·  Esc — отмена"
+        let text = L("overlay.hint")
         let font = NSFont.systemFont(ofSize: 12, weight: .medium)
         let w = NSAttributedString(string: text, attributes: [.font: font]).size().width + 16
         _ = drawPill(text, at: CGPoint(x: (bounds.width - w) / 2, y: 60), in: ctx, font: font)
