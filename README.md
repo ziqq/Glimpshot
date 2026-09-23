@@ -10,6 +10,14 @@ Lightshot-style screenshot tool for macOS 14+ (Apple Silicon). Local only: no ba
 Signed with the "Apple Development: a.a.ustinoff@gmail.com" identity (override with `SIGN_ID=<sha1>` or `SIGN_NAME=…`), so the
 Screen Recording permission survives rebuilds.
 
+## DMG
+```
+./make_dmg.sh                          # → build/Snaply-<version>.dmg (drag-to-Applications window)
+NOTARY_PROFILE=<profile> ./make_dmg.sh # sign with Developer ID + notarize + staple
+```
+Without a *Developer ID Application* certificate the DMG works on this Mac only — Gatekeeper blocks it elsewhere.
+One-time notary setup: `xcrun notarytool store-credentials <profile> --apple-id … --team-id …`.
+
 ## Use
 - ⌘⇧2 — capture area (click a window to select it), ⌘⇧1 — capture the whole screen under the cursor
 - In the editor: ↩/⌘C copy, ⌘S save, ⇧⌘S save as, ⌘P pin, ⌘Z/⇧⌘Z undo/redo, Esc cancel
@@ -17,4 +25,6 @@ Screen Recording permission survives rebuilds.
 - Pinned image: drag, scroll/pinch to zoom, double-click/Esc to close, right-click menu
 
 ## Dev
+UI strings live in `scripts/strings.py` (11 languages) — edit there, then run `python3 scripts/strings.py`.
+
 `swift run Snaply --selftest /tmp/st` drives the editor on a fake desktop and writes PNGs (no permission needed).

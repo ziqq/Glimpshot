@@ -38,7 +38,10 @@ SIGN_NAME="${SIGN_NAME:-Apple Development: a.a.ustinoff@gmail.com}"
 SIGN_ID="${SIGN_ID:-$(security find-identity -v -p codesigning | grep -m1 -F "$SIGN_NAME" | awk '{print $2}' || true)}"
 if [ -n "$SIGN_ID" ]; then
     echo "→ signing with: $SIGN_ID"
-    codesign --force --options runtime --sign "$SIGN_ID" "$APP"
+    # Developer ID builds get a secure timestamp (required for notarization).
+    TS=""
+    if security find-identity -v -p codesigning | grep -F "$SIGN_ID" | grep -q "Developer ID"; then TS="--timestamp"; fi
+    codesign --force --options runtime $TS --sign "$SIGN_ID" "$APP"
 else
     echo "→ no Apple Development identity, signing ad-hoc"
     codesign --force --sign - "$APP"
