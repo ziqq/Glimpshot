@@ -18,6 +18,14 @@ NOTARY_PROFILE=<profile> ./make_dmg.sh # sign with Developer ID + notarize + sta
 Without a *Developer ID Application* certificate the DMG works on this Mac only — Gatekeeper blocks it elsewhere.
 One-time notary setup: `xcrun notarytool store-credentials <profile> --apple-id … --team-id …`.
 
+## Releases (GitHub Actions)
+Push a tag → `.github/workflows/release.yml` builds the DMG and publishes a GitHub Release:
+```
+git tag v0.2.0 && git push origin v0.2.0
+```
+Add secrets `DEVELOPER_ID_P12`, `DEVELOPER_ID_PASSWORD`, `APPLE_ID`, `APPLE_TEAM_ID`, `APPLE_APP_PASSWORD`
+for a signed + notarized build; without them the DMG is ad-hoc signed. `ci.yml` builds every push/PR.
+
 ## Use
 - ⌘⇧2 — capture area (click a window to select it), ⌘⇧1 — capture the whole screen under the cursor
 - In the editor: ↩/⌘C copy, ⌘S save, ⇧⌘S save as, ⌘P pin, ⌘Z/⇧⌘Z undo/redo, Esc cancel
