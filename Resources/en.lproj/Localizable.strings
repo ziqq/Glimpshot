@@ -62,6 +62,7 @@
 "settings.copyOnSave" = "Copy to clipboard when saving";
 "settings.appearance" = "Appearance";
 "settings.accent" = "Accent color";
+"settings.menuBarIcon" = "Menu bar icon";
 "settings.language" = "Language";
 "settings.languageSystem" = "System";
 "settings.languageRestart" = "Relaunch to apply the language.";

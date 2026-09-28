@@ -36,6 +36,7 @@ struct SettingsView: View {
 
             Section(L("settings.appearance")) {
                 LabeledContent(L("settings.accent")) { AccentPicker(selection: $prefs.accentIndex) }
+                LabeledContent(L("settings.menuBarIcon")) { MenuBarIconPicker(selection: $prefs.menuBarIcon) }
                 Picker(L("settings.language"), selection: $prefs.language) {
                     Text(L("settings.languageSystem")).tag("")
                     Divider()
@@ -151,6 +152,34 @@ struct SettingsView: View {
         panel.prompt = L("settings.choose")
         if panel.runModal() == .OK, let url = panel.url {
             prefs.saveFolder = url
+        }
+    }
+}
+
+private struct MenuBarIconPicker: View {
+    @Binding var selection: String
+
+    var body: some View {
+        HStack(spacing: 4) {
+            ForEach(MenuBarIcon.allCases) { icon in
+                Button {
+                    selection = icon.rawValue
+                } label: {
+                    Image(nsImage: icon.image)
+                        .renderingMode(.template)
+                        .frame(width: 30, height: 26)
+                        .background(
+                            RoundedRectangle(cornerRadius: 6, style: .continuous)
+                                .fill(selection == icon.rawValue ? Theme.accentColor.opacity(0.25) : .clear)
+                        )
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 6, style: .continuous)
+                                .strokeBorder(selection == icon.rawValue ? Theme.accentColor : .clear, lineWidth: 1.5)
+                        )
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+            }
         }
     }
 }

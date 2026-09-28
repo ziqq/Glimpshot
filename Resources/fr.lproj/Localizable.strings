@@ -62,6 +62,7 @@
 "settings.copyOnSave" = "Copier dans le presse-papiers à l’enregistrement";
 "settings.appearance" = "Apparence";
 "settings.accent" = "Couleur d’accentuation";
+"settings.menuBarIcon" = "Icône de la barre des menus";
 "settings.language" = "Langue";
 "settings.languageSystem" = "Système";
 "settings.languageRestart" = "Relancez pour appliquer la langue.";

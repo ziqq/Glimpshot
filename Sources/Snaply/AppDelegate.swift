@@ -41,9 +41,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     private func setupStatusItem() {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
-        let image = NSImage(systemSymbolName: "camera.viewfinder", accessibilityDescription: AppInfo.name)
-        image?.isTemplate = true
-        statusItem.button?.image = image
+        Preferences.shared.$menuBarIcon
+            .receive(on: RunLoop.main)
+            .sink { [weak self] raw in
+                self?.statusItem.button?.image = (MenuBarIcon(rawValue: raw) ?? .quill).image
+            }
+            .store(in: &cancellables)
 
         let menu = NSMenu()
         menu.delegate = self

@@ -62,6 +62,7 @@
 "settings.copyOnSave" = "Copiar al portapapeles al guardar";
 "settings.appearance" = "Apariencia";
 "settings.accent" = "Color de acento";
+"settings.menuBarIcon" = "Icono de la barra de menús";
 "settings.language" = "Idioma";
 "settings.languageSystem" = "Sistema";
 "settings.languageRestart" = "Reinicia para aplicar el idioma.";

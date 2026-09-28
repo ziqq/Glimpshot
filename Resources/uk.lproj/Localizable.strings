@@ -62,6 +62,7 @@
 "settings.copyOnSave" = "Копіювати в буфер під час збереження";
 "settings.appearance" = "Вигляд";
 "settings.accent" = "Акцентний колір";
+"settings.menuBarIcon" = "Іконка в рядку меню";
 "settings.language" = "Мова";
 "settings.languageSystem" = "Як у системі";
 "settings.languageRestart" = "Перезапустіть, щоб змінити мову.";

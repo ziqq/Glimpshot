@@ -62,6 +62,7 @@
 "settings.copyOnSave" = "Beim Sichern in die Zwischenablage kopieren";
 "settings.appearance" = "Erscheinungsbild";
 "settings.accent" = "Akzentfarbe";
+"settings.menuBarIcon" = "Symbol in der Menüleiste";
 "settings.language" = "Sprache";
 "settings.languageSystem" = "System";
 "settings.languageRestart" = "Neu starten, um die Sprache zu übernehmen.";

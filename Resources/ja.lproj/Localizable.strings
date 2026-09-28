@@ -62,6 +62,7 @@
 "settings.copyOnSave" = "保存時にクリップボードにコピー";
 "settings.appearance" = "外観";
 "settings.accent" = "アクセントカラー";
+"settings.menuBarIcon" = "メニューバーのアイコン";
 "settings.language" = "言語";
 "settings.languageSystem" = "システム";
 "settings.languageRestart" = "言語を適用するには再起動してください。";

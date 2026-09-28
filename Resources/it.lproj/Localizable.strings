@@ -62,6 +62,7 @@
 "settings.copyOnSave" = "Copia negli appunti al salvataggio";
 "settings.appearance" = "Aspetto";
 "settings.accent" = "Colore di accento";
+"settings.menuBarIcon" = "Icona nella barra dei menu";
 "settings.language" = "Lingua";
 "settings.languageSystem" = "Sistema";
 "settings.languageRestart" = "Riavvia per applicare la lingua.";
