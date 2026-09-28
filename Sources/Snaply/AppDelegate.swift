@@ -44,7 +44,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         Preferences.shared.$menuBarIcon
             .receive(on: RunLoop.main)
             .sink { [weak self] raw in
-                self?.statusItem.button?.image = (MenuBarIcon(rawValue: raw) ?? .quill).image
+                self?.statusItem.button?.image = (MenuBarIcon(rawValue: raw) ?? .eye).image
             }
             .store(in: &cancellables)
 

@@ -141,7 +141,7 @@ final class Preferences: ObservableObject {
             "strokeSize": 1,
             "accentIndex": -1,
             "autoCheckUpdates": true,
-            "menuBarIcon": "quill",
+            "menuBarIcon": "eye",
             "language": "",
         ])
         saveFolder = d.string(forKey: "saveFolder").map { URL(fileURLWithPath: $0, isDirectory: true) }
@@ -155,7 +155,7 @@ final class Preferences: ObservableObject {
         strokeSize = d.integer(forKey: "strokeSize")
         accentIndex = d.integer(forKey: "accentIndex")
         autoCheckUpdates = d.bool(forKey: "autoCheckUpdates")
-        menuBarIcon = d.string(forKey: "menuBarIcon") ?? "quill"
+        menuBarIcon = d.string(forKey: "menuBarIcon") ?? "eye"
         language = d.string(forKey: "language") ?? ""
         launchLanguage = d.string(forKey: "language") ?? ""
         areaShortcut = Preferences.load("areaShortcut") ?? .defaultArea

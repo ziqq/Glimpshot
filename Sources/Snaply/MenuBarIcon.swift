@@ -2,7 +2,7 @@ import AppKit
 
 /// Menu bar glyphs, drawn as 18×18 pt template images (y up).
 enum MenuBarIcon: String, CaseIterable, Identifiable {
-    case quill, feather, eye, spark, nib, marquee, viewfinder
+    case eye, eyeSolid, peek, spark, nib, marquee, viewfinder
 
     var id: String { rawValue }
 
@@ -26,9 +26,9 @@ enum MenuBarIcon: String, CaseIterable, Identifiable {
 
     private func draw(in c: CGContext) {
         switch self {
-        case .quill: Self.quill(c)
-        case .feather: Self.feather(c)
         case .eye: Self.eye(c)
+        case .eyeSolid: Self.eyeSolid(c)
+        case .peek: Self.peek(c)
         case .spark: Self.spark(c)
         case .nib: Self.nib(c)
         case .marquee: Self.marquee(c)
@@ -50,49 +50,44 @@ enum MenuBarIcon: String, CaseIterable, Identifiable {
         c.setLineWidth(width); c.setLineCap(.round); c.setLineJoin(.round); c.strokePath()
     }
 
-    /// Crop corners with a feather crossing the frame.
-    private static func quill(_ c: CGContext) {
-        c.setLineWidth(1.7); c.setLineCap(.round); c.setLineJoin(.round)
-        c.move(to: CGPoint(x: 1.4, y: 11.6)); c.addLine(to: CGPoint(x: 1.4, y: 16.6)); c.addLine(to: CGPoint(x: 6.4, y: 16.6)); c.strokePath()
-        c.move(to: CGPoint(x: 11.6, y: 1.4)); c.addLine(to: CGPoint(x: 16.6, y: 1.4)); c.addLine(to: CGPoint(x: 16.6, y: 6.4)); c.strokePath()
-        let f = CGMutablePath()
-        f.move(to: CGPoint(x: 15.2, y: 15.6))
-        f.addCurve(to: CGPoint(x: 6.0, y: 6.2), control1: CGPoint(x: 9.8, y: 15.2), control2: CGPoint(x: 5.8, y: 11.2))
-        f.addCurve(to: CGPoint(x: 15.2, y: 15.6), control1: CGPoint(x: 10.8, y: 6.0), control2: CGPoint(x: 15.0, y: 10.0))
-        c.addPath(f); c.fillPath()
-        cut(c) {
-            c.setLineWidth(0.9)
-            c.move(to: CGPoint(x: 6.8, y: 7.0)); c.addLine(to: CGPoint(x: 14.3, y: 14.7)); c.strokePath()
-        }
-        c.setLineWidth(1.4)
-        c.move(to: CGPoint(x: 6.6, y: 6.8)); c.addLine(to: CGPoint(x: 4.0, y: 4.0)); c.strokePath()
+
+
+
+    private static func almond(_ l: CGFloat, _ r: CGFloat, _ cy: CGFloat, up: CGFloat, down: CGFloat) -> CGPath {
+        let p = CGMutablePath(), mx = (l + r) / 2
+        p.move(to: CGPoint(x: l, y: cy))
+        p.addQuadCurve(to: CGPoint(x: r, y: cy), control: CGPoint(x: mx, y: cy + up))
+        p.addQuadCurve(to: CGPoint(x: l, y: cy), control: CGPoint(x: mx, y: cy - down))
+        return p
     }
 
-    private static func feather(_ c: CGContext) {
-        let f = CGMutablePath()
-        f.move(to: CGPoint(x: 16.6, y: 17.2))
-        f.addCurve(to: CGPoint(x: 4.2, y: 4.6), control1: CGPoint(x: 9.5, y: 16.8), control2: CGPoint(x: 4.0, y: 11.5))
-        f.addCurve(to: CGPoint(x: 16.6, y: 17.2), control1: CGPoint(x: 10.5, y: 4.4), control2: CGPoint(x: 16.4, y: 9.5))
-        c.addPath(f); c.fillPath()
-        cut(c) {
-            c.setLineCap(.round); c.setLineWidth(1.1)
-            c.move(to: CGPoint(x: 5.2, y: 5.6)); c.addLine(to: CGPoint(x: 15.6, y: 16.2)); c.strokePath()
-            c.setLineWidth(0.9)
-            c.move(to: CGPoint(x: 12.4, y: 12.9)); c.addLine(to: CGPoint(x: 14.9, y: 11.4)); c.strokePath()
-            c.move(to: CGPoint(x: 8.6, y: 9.1)); c.addLine(to: CGPoint(x: 6.9, y: 11.8)); c.strokePath()
-        }
-        c.setLineWidth(1.6); c.setLineCap(.round)
-        c.move(to: CGPoint(x: 5.0, y: 5.4)); c.addLine(to: CGPoint(x: 1.6, y: 1.8)); c.strokePath()
-    }
-
+    /// Wide eye filling the viewfinder, pupil with a glint.
     private static func eye(_ c: CGContext) {
+        corners(c, inset: 1.2, arm: 3.4, width: 1.6)
+        c.addPath(almond(2.6, 15.4, 9, up: 7.4, down: 7.4)); c.setLineWidth(1.5); c.setLineJoin(.round); c.strokePath()
+        c.fillEllipse(in: CGRect(x: 6.6, y: 6.6, width: 4.8, height: 4.8))
+        cut(c) { c.fillEllipse(in: CGRect(x: 9.3, y: 9.4, width: 1.2, height: 1.2)) }
+    }
+
+    private static func eyeSolid(_ c: CGContext) {
         corners(c)
-        let eye = CGMutablePath()
-        eye.move(to: CGPoint(x: 4.4, y: 9))
-        eye.addQuadCurve(to: CGPoint(x: 13.6, y: 9), control: CGPoint(x: 9, y: 14.2))
-        eye.addQuadCurve(to: CGPoint(x: 4.4, y: 9), control: CGPoint(x: 9, y: 3.8))
-        c.addPath(eye); c.setLineWidth(1.5); c.setLineJoin(.round); c.strokePath()
-        c.fillEllipse(in: CGRect(x: 7.1, y: 7.1, width: 3.8, height: 3.8))
+        c.addPath(almond(3.8, 14.2, 9, up: 5.8, down: 5.8)); c.fillPath()
+        cut(c) { c.fillEllipse(in: CGRect(x: 6.6, y: 6.6, width: 4.8, height: 4.8)) }
+        c.fillEllipse(in: CGRect(x: 7.8, y: 7.8, width: 2.4, height: 2.4))
+        cut(c) { c.fillEllipse(in: CGRect(x: 9.3, y: 9.5, width: 1.1, height: 1.1)) }
+    }
+
+    /// Half-open, curious eye.
+    private static func peek(_ c: CGContext) {
+        corners(c)
+        let lid = CGMutablePath()
+        lid.move(to: CGPoint(x: 4.0, y: 9.4)); lid.addQuadCurve(to: CGPoint(x: 14.0, y: 9.4), control: CGPoint(x: 9, y: 14.6))
+        c.addPath(lid); c.setLineWidth(1.7); c.setLineCap(.round); c.strokePath()
+        let low = CGMutablePath()
+        low.move(to: CGPoint(x: 5.6, y: 8.2)); low.addQuadCurve(to: CGPoint(x: 12.4, y: 8.2), control: CGPoint(x: 9, y: 4.6))
+        c.addPath(low); c.setLineWidth(1.2); c.strokePath()
+        c.fillEllipse(in: CGRect(x: 7.0, y: 6.6, width: 4.0, height: 4.0))
+        cut(c) { c.fillEllipse(in: CGRect(x: 9.2, y: 8.7, width: 1.1, height: 1.1)) }
     }
 
     private static func spark(_ c: CGContext) {
