@@ -208,12 +208,21 @@ final class OverlayView: NSView, NSTextViewDelegate {
             needsDisplay = true
             return
         }
-        // Outside of the selection: start over, unless there is work to lose.
-        if annotations.isEmpty {
+        // Outside of the selection.
+        switch editor.tool {
+        case .select:
+            // Start a new selection, unless there is work to lose.
+            guard annotations.isEmpty else { return }
             selection = nil
             drag = .creating(start: p, moved: false)
             layoutToolbar()
             needsDisplay = true
+        case .text, .counter:
+            break
+        default:
+            // Strokes may start outside (e.g. an arrow pointing in); they're clipped to the selection.
+            current = Annotation.begin(tool: editor.tool, at: p, color: editor.color, width: editor.width)
+            drag = .drawing
         }
     }
 
@@ -269,8 +278,9 @@ final class OverlayView: NSView, NSTextViewDelegate {
     }
 
     override func rightMouseDown(with event: NSEvent) {
-        // Right click cancels like in most capture tools.
-        session?.finish(.cancel, from: self)
+        // Right click cancels only before anything is selected — an accidental
+        // secondary click on a trackpad shouldn't throw away a selection.
+        if selection == nil { session?.finish(.cancel, from: self) }
     }
 
     // MARK: Handles

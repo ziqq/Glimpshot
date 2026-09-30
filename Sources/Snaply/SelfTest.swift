@@ -58,6 +58,11 @@ enum SelfTest {
         // 2. Drag a selection, then annotate
         drag(CGPoint(x: 200, y: 160), CGPoint(x: 800, y: 540))
         key(kVK_ANSI_A)                                   // arrow
+        let before = view.selection
+        drag(CGPoint(x: 120, y: 420), CGPoint(x: 330, y: 420)) // starts outside the selection
+        precondition(view.selection == before, "drawing from outside must not reset the selection")
+        precondition(editor.canUndo, "drawing from outside must add an annotation")
+        print("check: stroke from outside keeps selection ✓")
         drag(CGPoint(x: 260, y: 480), CGPoint(x: 470, y: 330))
         key(kVK_ANSI_R)                                   // rect
         drag(CGPoint(x: 480, y: 250), CGPoint(x: 700, y: 330))
