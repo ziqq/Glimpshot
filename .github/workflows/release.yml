@@ -69,7 +69,7 @@ jobs:
           echo "NOTARY_PROFILE=ci" >> "$GITHUB_ENV"
 
       - name: Build DMG
-        run: ./make_dmg.sh
+        run: scripts/make_dmg.sh
 
       - name: Publish release
         env:

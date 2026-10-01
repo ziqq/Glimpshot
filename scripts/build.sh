@@ -1,10 +1,10 @@
 #!/bin/bash
 # Builds Glimpshot.app (arm64) into ./build
-#   ./build.sh            — build
-#   ./build.sh --install  — build and copy to /Applications
-#   SIGN_ID=<sha1 or name> ./build.sh — override the signing identity
+#   scripts/build.sh            — build
+#   scripts/build.sh --install  — build and copy to /Applications
+#   SIGN_ID=<sha1 or name> scripts/build.sh — override the signing identity
 set -euo pipefail
-cd "$(dirname "$0")"
+cd "$(dirname "$0")/.."
 
 APP="build/Glimpshot.app"
 ICON="Resources/AppIcon.icns"

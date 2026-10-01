@@ -1,11 +1,11 @@
 #!/bin/bash
 # Packages build/Glimpshot.app into build/Glimpshot-<version>.dmg with a drag-to-Applications layout.
-#   ./make_dmg.sh                      — build + package
-#   ./make_dmg.sh --skip-build         — package the existing build/Glimpshot.app
-#   NOTARY_PROFILE=<name> ./make_dmg.sh — also notarize + staple (needs a Developer ID Application cert;
+#   scripts/make_dmg.sh                      — build + package
+#   scripts/make_dmg.sh --skip-build         — package the existing build/Glimpshot.app
+#   NOTARY_PROFILE=<name> scripts/make_dmg.sh — also notarize + staple (needs a Developer ID Application cert;
 #       create the profile once: xcrun notarytool store-credentials <name> --apple-id … --team-id …)
 set -euo pipefail
-cd "$(dirname "$0")"
+cd "$(dirname "$0")/.."
 
 NAME="Glimpshot"
 APP="build/$NAME.app"
@@ -13,7 +13,7 @@ APP="build/$NAME.app"
 # Prefer Developer ID for distribution; fall back to whatever build.sh picks.
 DEV_ID="$(security find-identity -v -p codesigning | grep -m1 'Developer ID Application' | awk '{print $2}' || true)"
 if [ "${1:-}" != "--skip-build" ]; then
-    if [ -n "$DEV_ID" ]; then SIGN_ID="$DEV_ID" ./build.sh; else ./build.sh; fi
+    if [ -n "$DEV_ID" ]; then SIGN_ID="$DEV_ID" scripts/build.sh; else scripts/build.sh; fi
 fi
 [ -d "$APP" ] || { echo "✗ $APP not found"; exit 1; }
 
