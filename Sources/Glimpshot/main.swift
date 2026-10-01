@@ -7,6 +7,7 @@ MainActor.assumeIsolated {
         app.run()
         return
     }
+    LegacyMigration.run()
     let delegate = AppDelegate()
     app.delegate = delegate
     app.setActivationPolicy(.accessory)

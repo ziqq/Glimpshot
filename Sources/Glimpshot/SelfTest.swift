@@ -2,7 +2,7 @@ import AppKit
 import SwiftUI
 import Carbon.HIToolbox
 
-/// `Snaply --selftest <dir>`: drives the editor with synthetic input on a fake desktop
+/// `Glimpshot --selftest <dir>`: drives the editor with synthetic input on a fake desktop
 /// and writes the overlay UI and the exported image as PNGs. No screen permission needed.
 @MainActor
 enum SelfTest {
@@ -81,7 +81,7 @@ enum SelfTest {
         key(kVK_ANSI_T)                                   // text
         view.mouseDown(with: ev(.leftMouseDown, CGPoint(x: 500, y: 460)))
         view.mouseUp(with: ev(.leftMouseUp, CGPoint(x: 500, y: 460)))
-        (window.firstResponder as? NSTextView)?.insertText("Привет, Snaply!", replacementRange: NSRange(location: NSNotFound, length: 0))
+        (window.firstResponder as? NSTextView)?.insertText("Привет, Glimpshot!", replacementRange: NSRange(location: NSNotFound, length: 0))
         view.mouseMoved(with: ev(.mouseMoved, CGPoint(x: 900, y: 600)))
 
         // Hover the arrow tool button (4th control in the main bar).

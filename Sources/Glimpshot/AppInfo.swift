@@ -3,8 +3,8 @@ import SwiftUI
 
 enum AppInfo {
     /// Display name — change here (and in Info.plist) to rebrand.
-    static let name = "Snaply"
-    static let repo = "ziqq/Snaply"
+    static let name = "Glimpshot"
+    static let repo = "ziqq/Glimpshot"
     static var version: String {
         Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "0.0.0"
     }

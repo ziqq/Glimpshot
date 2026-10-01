@@ -2,12 +2,12 @@
 import PackageDescription
 
 let package = Package(
-    name: "Snaply",
+    name: "Glimpshot",
     platforms: [.macOS(.v14)],
     targets: [
         .executableTarget(
-            name: "Snaply",
-            path: "Sources/Snaply",
+            name: "Glimpshot",
+            path: "Sources/Glimpshot",
             linkerSettings: [
                 .linkedFramework("Carbon"),
                 .linkedFramework("ScreenCaptureKit"),

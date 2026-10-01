@@ -126,7 +126,7 @@ final class Preferences: ObservableObject {
 
     static var defaultFolder: URL {
         FileManager.default.urls(for: .picturesDirectory, in: .userDomainMask)[0]
-            .appendingPathComponent("Snaply", isDirectory: true)
+            .appendingPathComponent("Glimpshot", isDirectory: true)
     }
 
     private init() {
@@ -180,5 +180,5 @@ extension URL {
 }
 
 extension Notification.Name {
-    static let snaplyDidSave = Notification.Name("SnaplyDidSave")
+    static let glimpshotDidSave = Notification.Name("GlimpshotDidSave")
 }

@@ -1,18 +1,18 @@
-# Snaply
+# Glimpshot
 
 Lightshot-style screenshot tool for macOS 14+ (Apple Silicon). Local only: no backend, no sync.
 
 ## Build
 ```
-./build.sh            # → build/Snaply.app
-./build.sh --install  # → /Applications/Snaply.app
+./build.sh            # → build/Glimpshot.app
+./build.sh --install  # → /Applications/Glimpshot.app
 ```
 Signed with the "Apple Development: a.a.ustinoff@gmail.com" identity (override with `SIGN_ID=<sha1>` or `SIGN_NAME=…`), so the
 Screen Recording permission survives rebuilds.
 
 ## DMG
 ```
-./make_dmg.sh                          # → build/Snaply-<version>.dmg (drag-to-Applications window)
+./make_dmg.sh                          # → build/Glimpshot-<version>.dmg (drag-to-Applications window)
 NOTARY_PROFILE=<profile> ./make_dmg.sh # sign with Developer ID + notarize + staple
 ```
 Without a *Developer ID Application* certificate the DMG works on this Mac only — Gatekeeper blocks it elsewhere.
@@ -35,4 +35,4 @@ for a signed + notarized build; without them the DMG is ad-hoc signed. `ci.yml` 
 ## Dev
 UI strings live in `scripts/strings.py` (11 languages) — edit there, then run `python3 scripts/strings.py`.
 
-`swift run Snaply --selftest /tmp/st` drives the editor on a fake desktop and writes PNGs (no permission needed).
+`swift run Glimpshot --selftest /tmp/st` drives the editor on a fake desktop and writes PNGs (no permission needed).

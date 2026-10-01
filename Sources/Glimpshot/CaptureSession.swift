@@ -135,7 +135,7 @@ enum Exporter {
         }
         try FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
         try data.write(to: url, options: .atomic)
-        NotificationCenter.default.post(name: .snaplyDidSave, object: url)
+        NotificationCenter.default.post(name: .glimpshotDidSave, object: url)
         return url
     }
 

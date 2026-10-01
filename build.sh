@@ -1,12 +1,12 @@
 #!/bin/bash
-# Builds Snaply.app (arm64) into ./build
+# Builds Glimpshot.app (arm64) into ./build
 #   ./build.sh            — build
 #   ./build.sh --install  — build and copy to /Applications
 #   SIGN_ID=<sha1 or name> ./build.sh — override the signing identity
 set -euo pipefail
 cd "$(dirname "$0")"
 
-APP="build/Snaply.app"
+APP="build/Glimpshot.app"
 ICON="Resources/AppIcon.icns"
 
 swift build -c release --arch arm64
@@ -27,7 +27,7 @@ fi
 
 rm -rf "$APP"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
-cp ".build/arm64-apple-macosx/release/Snaply" "$APP/Contents/MacOS/Snaply"
+cp ".build/arm64-apple-macosx/release/Glimpshot" "$APP/Contents/MacOS/Glimpshot"
 cp Resources/Info.plist "$APP/Contents/Info.plist"
 cp "$ICON" "$APP/Contents/Resources/AppIcon.icns"
 cp -R Resources/*.lproj "$APP/Contents/Resources/"
@@ -48,10 +48,10 @@ else
 fi
 
 if [ "${1:-}" = "--install" ]; then
-    pkill -x Snaply 2>/dev/null || true
-    rm -rf /Applications/Snaply.app
+    pkill -x Glimpshot 2>/dev/null || true
+    rm -rf /Applications/Glimpshot.app
     cp -R "$APP" /Applications/
-    echo "✓ installed to /Applications/Snaply.app"
+    echo "✓ installed to /Applications/Glimpshot.app"
 else
     echo "✓ $APP"
 fi

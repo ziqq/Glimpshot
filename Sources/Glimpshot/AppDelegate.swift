@@ -3,7 +3,7 @@ import Combine
 import SwiftUI
 import os
 
-let log = Logger(subsystem: "com.ziqq.snaply", category: "app")
+let log = Logger(subsystem: "com.ziqq.glimpshot", category: "app")
 
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
@@ -90,7 +90,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         let okFull = center.register(id: HotKey.full.rawValue, shortcut: full) { [weak self] in self?.startCapture(fullScreen: true) }
         if !okArea || !okFull {
             let taken = [okArea ? nil : area?.displayString, okFull ? nil : full?.displayString].compactMap { $0 }
-            NSLog("Snaply: hotkey already in use: \(taken)")
+            NSLog("Glimpshot: hotkey already in use: \(taken)")
         }
     }
 
@@ -174,7 +174,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             w.contentViewController = NSHostingController(rootView: HistoryView(model: history))
             w.setContentSize(CGSize(width: 820, height: 560))
             w.isReleasedWhenClosed = false
-            w.setFrameAutosaveName("SnaplyHistory")
+            w.setFrameAutosaveName("GlimpshotHistory")
             w.center()
             historyWindow = w
         }

@@ -16,7 +16,7 @@ final class HistoryModel: ObservableObject {
     private var observer: NSObjectProtocol?
 
     init() {
-        observer = NotificationCenter.default.addObserver(forName: .snaplyDidSave, object: nil, queue: .main) { [weak self] _ in
+        observer = NotificationCenter.default.addObserver(forName: .glimpshotDidSave, object: nil, queue: .main) { [weak self] _ in
             Task { @MainActor in self?.reload() }
         }
     }

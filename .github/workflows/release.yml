@@ -75,9 +75,9 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          DMG="build/Snaply-$V.dmg"
+          DMG="build/Glimpshot-$V.dmg"
           shasum -a 256 "$DMG" | tee "$DMG.sha256"
-          gh release create "v$V" "$DMG" "$DMG.sha256" --title "Snaply $V" --generate-notes \
+          gh release create "v$V" "$DMG" "$DMG.sha256" --title "Glimpshot $V" --generate-notes \
             || gh release upload "v$V" "$DMG" "$DMG.sha256" --clobber
 
       - name: Clean up keychain

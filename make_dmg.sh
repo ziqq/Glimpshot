@@ -1,13 +1,13 @@
 #!/bin/bash
-# Packages build/Snaply.app into build/Snaply-<version>.dmg with a drag-to-Applications layout.
+# Packages build/Glimpshot.app into build/Glimpshot-<version>.dmg with a drag-to-Applications layout.
 #   ./make_dmg.sh                      — build + package
-#   ./make_dmg.sh --skip-build         — package the existing build/Snaply.app
+#   ./make_dmg.sh --skip-build         — package the existing build/Glimpshot.app
 #   NOTARY_PROFILE=<name> ./make_dmg.sh — also notarize + staple (needs a Developer ID Application cert;
 #       create the profile once: xcrun notarytool store-credentials <name> --apple-id … --team-id …)
 set -euo pipefail
 cd "$(dirname "$0")"
 
-NAME="Snaply"
+NAME="Glimpshot"
 APP="build/$NAME.app"
 
 # Prefer Developer ID for distribution; fall back to whatever build.sh picks.
