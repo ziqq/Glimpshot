@@ -1,3 +1,7 @@
+// https://github.com/ziqq/Glimpshot
+// Copyright (C) 2026 Anton Ustinoff
+// https://github.com/ziqq/Glimpshot/blob/main/LICENSE
+
 import AppKit
 
 /// Menu bar glyphs, drawn as 18×18 pt template images (y up).

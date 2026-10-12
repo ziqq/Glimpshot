@@ -1,3 +1,7 @@
+// https://github.com/ziqq/Glimpshot
+// Copyright (C) 2026 Anton Ustinoff
+// https://github.com/ziqq/Glimpshot/blob/main/LICENSE
+
 import AppKit
 
 /// Checks GitHub Releases for a newer version. No backend of our own — just the public GitHub API.

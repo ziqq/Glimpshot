@@ -20,7 +20,7 @@ scripts/build.sh --install     # build and install to /Applications
 ```
 
 `scripts/build.sh` signs with the first valid `Apple Development` identity matching `SIGN_NAME`
-(override with `SIGN_ID=<sha1>`), falling back to ad-hoc. A stable identity keeps the
+(`Apple Development` by default; override with `SIGN_NAME=…` or `SIGN_ID=<sha1>`), falling back to ad-hoc. A stable identity keeps the
 Screen Recording permission across rebuilds; ad-hoc signing resets it every time.
 
 ## Project layout

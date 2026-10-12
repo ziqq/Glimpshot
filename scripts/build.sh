@@ -1,4 +1,8 @@
 #!/bin/bash
+# https://github.com/ziqq/Glimpshot
+# Copyright (C) 2026 Anton Ustinoff
+# https://github.com/ziqq/Glimpshot/blob/main/LICENSE
+
 # Builds Glimpshot.app (arm64) into ./build
 #   scripts/build.sh            — build
 #   scripts/build.sh --install  — build and copy to /Applications
@@ -33,8 +37,8 @@ cp "$ICON" "$APP/Contents/Resources/AppIcon.icns"
 cp -R Resources/*.lproj "$APP/Contents/Resources/"
 
 # A stable identity keeps the Screen Recording permission across rebuilds; ad-hoc resets it every time.
-# Default: Anton Ustinov's valid Apple Development cert, referenced by SHA-1 (an expired twin shares its name).
-SIGN_NAME="${SIGN_NAME:-Apple Development: a.a.ustinoff@gmail.com}"
+# Default: the first valid Apple Development cert, referenced by SHA-1 (an expired twin may share its name).
+SIGN_NAME="${SIGN_NAME:-Apple Development}"
 SIGN_ID="${SIGN_ID:-$(security find-identity -v -p codesigning | grep -m1 -F "$SIGN_NAME" | awk '{print $2}' || true)}"
 if [ -n "$SIGN_ID" ]; then
     echo "→ signing with: $SIGN_ID"

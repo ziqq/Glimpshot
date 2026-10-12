@@ -1,4 +1,8 @@
 #!/bin/bash
+# https://github.com/ziqq/Glimpshot
+# Copyright (C) 2026 Anton Ustinoff
+# https://github.com/ziqq/Glimpshot/blob/main/LICENSE
+
 # Packages build/Glimpshot.app into build/Glimpshot-<version>.dmg with a drag-to-Applications layout.
 #   scripts/make_dmg.sh                      — build + package
 #   scripts/make_dmg.sh --skip-build         — package the existing build/Glimpshot.app

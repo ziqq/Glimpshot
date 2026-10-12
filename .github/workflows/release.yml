@@ -1,3 +1,7 @@
+# https://github.com/ziqq/Glimpshot
+# Copyright (C) 2026 Anton Ustinoff
+# https://github.com/ziqq/Glimpshot/blob/main/LICENSE
+
 name: Release
 
 # Push a tag like v0.2.0 → builds, signs, notarizes (when secrets exist) and publishes the DMG.
@@ -6,7 +10,7 @@ name: Release
 #   DEVELOPER_ID_P12        base64 of the "Developer ID Application" certificate exported as .p12
 #   DEVELOPER_ID_PASSWORD   password of that .p12
 #   APPLE_ID                Apple ID email used for notarization
-#   APPLE_TEAM_ID           Team ID (e.g. SGWR678CX3)
+#   APPLE_TEAM_ID           Team ID (10 characters, from developer.apple.com → Membership)
 #   APPLE_APP_PASSWORD      app-specific password from appleid.apple.com
 # Without them the DMG is ad-hoc signed (fine for testing, blocked by Gatekeeper on other Macs).
 
@@ -25,10 +29,12 @@ permissions:
 jobs:
   release:
     runs-on: macos-15
+    # Signing secrets are released only after the `release` environment's protection rules pass.
+    environment: release
     env:
       VERSION: ${{ inputs.version || github.ref_name }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
       - name: Toolchain
         run: sudo xcode-select -s "$(ls -d /Applications/Xcode_16*.app | sort -V | tail -1)"
