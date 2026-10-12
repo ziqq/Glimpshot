@@ -37,9 +37,14 @@ cp "$ICON" "$APP/Contents/Resources/AppIcon.icns"
 cp -R Resources/*.lproj "$APP/Contents/Resources/"
 
 # A stable identity keeps the Screen Recording permission across rebuilds; ad-hoc resets it every time.
-# Default: the first valid Apple Development cert, referenced by SHA-1 (an expired twin may share its name).
-SIGN_NAME="${SIGN_NAME:-Apple Development}"
-SIGN_ID="${SIGN_ID:-$(security find-identity -v -p codesigning | grep -m1 -F "$SIGN_NAME" | awk '{print $2}' || true)}"
+# The identity name comes from SIGN_NAME or the untracked scripts/.sign-identity (e.g. your Apple ID email),
+# and is resolved to a SHA-1 (an expired twin may share its name). Without either, the build is signed ad-hoc.
+SIGN_FILE="scripts/.sign-identity"
+if [ -z "${SIGN_NAME:-}" ] && [ -f "$SIGN_FILE" ]; then SIGN_NAME="$(head -n1 "$SIGN_FILE")"; fi
+if [ -z "${SIGN_ID:-}" ] && [ -n "${SIGN_NAME:-}" ]; then
+    SIGN_ID="$(security find-identity -v -p codesigning | grep -m1 -F "$SIGN_NAME" | awk '{print $2}' || true)"
+fi
+SIGN_ID="${SIGN_ID:-}"
 if [ -n "$SIGN_ID" ]; then
     echo "→ signing with: $SIGN_ID"
     # Developer ID builds get a secure timestamp (required for notarization).
@@ -47,7 +52,7 @@ if [ -n "$SIGN_ID" ]; then
     if security find-identity -v -p codesigning | grep -F "$SIGN_ID" | grep -q "Developer ID"; then TS="--timestamp"; fi
     codesign --force --options runtime $TS --sign "$SIGN_ID" "$APP"
 else
-    echo "→ no Apple Development identity, signing ad-hoc"
+    echo "→ no signing identity (set SIGN_NAME or scripts/.sign-identity), signing ad-hoc"
     codesign --force --sign - "$APP"
 fi
 

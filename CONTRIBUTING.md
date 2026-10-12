@@ -19,8 +19,9 @@ scripts/build.sh               # release build → build/Glimpshot.app
 scripts/build.sh --install     # build and install to /Applications
 ```
 
-`scripts/build.sh` signs with the first valid `Apple Development` identity matching `SIGN_NAME`
-(`Apple Development` by default; override with `SIGN_NAME=…` or `SIGN_ID=<sha1>`), falling back to ad-hoc. A stable identity keeps the
+`scripts/build.sh` signs with the first valid identity matching `SIGN_NAME`, or the first line of the untracked
+`scripts/.sign-identity` (e.g. `echo "you@example.com" > scripts/.sign-identity`); `SIGN_ID=<sha1>` overrides both.
+Without any of them the build is signed ad-hoc. A stable identity keeps the
 Screen Recording permission across rebuilds; ad-hoc signing resets it every time.
 
 ## Project layout
