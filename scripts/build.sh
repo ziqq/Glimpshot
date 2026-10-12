@@ -1,4 +1,8 @@
 #!/bin/bash
+# https://github.com/ziqq/Glimpshot
+# Copyright (C) 2026 Anton Ustinoff
+# https://github.com/ziqq/Glimpshot/blob/main/LICENSE
+
 # Builds Glimpshot.app (arm64) into ./build
 #   scripts/build.sh            — build
 #   scripts/build.sh --install  — build and copy to /Applications

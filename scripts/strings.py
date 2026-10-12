@@ -1,4 +1,8 @@
 #!/usr/bin/env python3
+# https://github.com/ziqq/Glimpshot
+# Copyright (C) 2026 Anton Ustinoff
+# https://github.com/ziqq/Glimpshot/blob/main/LICENSE
+
 """Single source of truth for UI strings. Run to regenerate Resources/<lang>.lproj/Localizable.strings.
 
 Columns: en, ru, uk, de, fr, es, it, pt-BR, ja, ko, zh-Hans

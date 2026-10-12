@@ -1,3 +1,7 @@
+// https://github.com/ziqq/Glimpshot
+// Copyright (C) 2026 Anton Ustinoff
+// https://github.com/ziqq/Glimpshot/blob/main/LICENSE
+
 // Renders the DMG window background (660×400 pt @2x): `swift scripts/make_dmg_background.swift out.png`
 import AppKit
 

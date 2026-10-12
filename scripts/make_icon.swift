@@ -1,3 +1,7 @@
+// https://github.com/ziqq/Glimpshot
+// Copyright (C) 2026 Anton Ustinoff
+// https://github.com/ziqq/Glimpshot/blob/main/LICENSE
+
 // Renders the 1024×1024 app icon (Liquid Glass style): `swift scripts/make_icon.swift out.png`
 import AppKit
 
