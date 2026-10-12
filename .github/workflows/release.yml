@@ -29,6 +29,8 @@ permissions:
 jobs:
   release:
     runs-on: macos-15
+    # Signing secrets are released only after the `release` environment's protection rules pass.
+    environment: release
     env:
       VERSION: ${{ inputs.version || github.ref_name }}
     steps:
