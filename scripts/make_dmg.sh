@@ -37,7 +37,8 @@ DMG="build/$NAME-$VERSION.dmg"
 TMP="$(mktemp -d)"
 STAGE="$TMP/stage"
 RW="$TMP/rw.dmg"
-trap 'hdiutil detach "/Volumes/$VOLNAME" -quiet 2>/dev/null || true; rm -rf "$TMP"' EXIT
+VERIFY_MOUNT="$TMP/verify"
+trap 'hdiutil detach "$VERIFY_MOUNT" -quiet 2>/dev/null || true; hdiutil detach "/Volumes/$VOLNAME" -quiet 2>/dev/null || true; rm -rf "$TMP"' EXIT
 
 # App and DMG each need their own accepted submission and saved log.
 notarize() {
@@ -60,10 +61,11 @@ if [ -n "$DEV_ID" ]; then
     APP_SIGNER="$(shasum -a 1 "$TMP/signer0" | awk '{ print toupper($1) }')"
     [ "$APP_SIGNER" = "$(printf '%s' "$DEV_ID" | tr '[:lower:]' '[:upper:]')" ]
     SIGNATURE="$(codesign -dv --verbose=4 "$APP" 2>&1)"
-    if [[ "$SIGNATURE" != *"(runtime)"* || "$SIGNATURE" != *$'\nTimestamp='* || "$SIGNATURE" == *$'\nTimestamp=none'* ]]; then
-        echo "✗ Developer ID app signature requires hardened runtime and a secure timestamp"
-        exit 1
-    fi
+    [[ "$SIGNATURE" == *"(runtime)"* ]] || { echo "✗ Developer ID app signature requires hardened runtime"; exit 1; }
+    TIMESTAMP="$(printf '%s\n' "$SIGNATURE" | awk '/^Timestamp=/ { sub(/^Timestamp=/, ""); gsub(/^[[:space:]]+|[[:space:]]+$/, ""); print tolower($0) }')"
+    case "$TIMESTAMP" in
+        ''|none|'(none)') echo "✗ Developer ID app signature requires a secure timestamp"; exit 1 ;;
+    esac
     if [ -n "${SIGN_TEAM_ID:-}" ]; then
         printf '%s\n' "$SIGNATURE" | grep -Fx "TeamIdentifier=$SIGN_TEAM_ID" >/dev/null
     fi
@@ -146,6 +148,12 @@ if [ -n "$DEV_ID" ]; then
         xcrun stapler validate "$DMG"
         codesign --verify --strict --verbose=2 "$DMG"
         spctl --assess --type open --context context:primary-signature --verbose=2 "$DMG"
+        mkdir -p "$VERIFY_MOUNT"
+        hdiutil attach -nobrowse -readonly -mountpoint "$VERIFY_MOUNT" "$DMG"
+        codesign --verify --strict --verbose=2 "$VERIFY_MOUNT/$NAME.app"
+        xcrun stapler validate "$VERIFY_MOUNT/$NAME.app"
+        syspolicy_check distribution "$VERIFY_MOUNT/$NAME.app"
+        hdiutil detach -quiet "$VERIFY_MOUNT"
     else
         echo "  (set NOTARY_PROFILE to notarize)"
     fi

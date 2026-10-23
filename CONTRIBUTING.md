@@ -82,8 +82,10 @@ The workflow imports the identity into a temporary keychain and uses its exact S
 It verifies the app signature, hardened runtime and timestamp, notarizes a ZIP of the app with
 `notarytool --wait`, requires `Accepted`, then staples and validates the app ticket. The stapled app
 passes `syspolicy_check distribution` before it is copied into the DMG. The DMG is then signed,
-notarized, stapled, validated and assessed by Gatekeeper before publication. Submission results and
-logs are saved as `build/app-notarization-*.json` and `build/dmg-notarization-*.json`.
+notarized, stapled, validated and assessed by Gatekeeper. A final read-only mount verifies the signature,
+stapled ticket and distribution assessment of the app inside the finished DMG before publication.
+Submission results and logs are saved as `build/app-notarization-*.json` and `build/dmg-notarization-*.json`.
+These JSON receipts are retained as a workflow artifact for 30 days, including failed submissions.
 The temporary keychain is deleted on success or failure.
 See Apple's [notarization workflow](https://developer.apple.com/documentation/security/customizing-the-notarization-workflow).
 
