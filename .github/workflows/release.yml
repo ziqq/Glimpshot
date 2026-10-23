@@ -4,15 +4,15 @@
 
 name: Release
 
-# Push a tag like v0.2.0 → builds, signs, notarizes (when secrets exist) and publishes the DMG.
+# Push an existing tag like v0.2.0 → signs, notarizes and publishes the DMG.
 #
-# Optional secrets for a signed + notarized build:
+# Required secrets in the protected release environment:
 #   DEVELOPER_ID_P12        base64 of the "Developer ID Application" certificate exported as .p12
 #   DEVELOPER_ID_PASSWORD   password of that .p12
 #   APPLE_ID                Apple ID email used for notarization
 #   APPLE_TEAM_ID           Team ID (10 characters, from developer.apple.com → Membership)
 #   APPLE_APP_PASSWORD      app-specific password from appleid.apple.com
-# Without them the DMG is ad-hoc signed (fine for testing, blocked by Gatekeeper on other Macs).
+# Missing or invalid signing/notary credentials stop the release before publication.
 
 on:
   push:
@@ -64,28 +64,43 @@ jobs:
         env:
           P12: ${{ secrets.DEVELOPER_ID_P12 }}
           P12_PASSWORD: ${{ secrets.DEVELOPER_ID_PASSWORD }}
-        if: env.P12 != ''
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         run: |
+          set -euo pipefail
+          : "${P12:?DEVELOPER_ID_P12 is required}"
+          : "${P12_PASSWORD:?DEVELOPER_ID_PASSWORD is required}"
+          [[ "$APPLE_TEAM_ID" =~ ^[A-Z0-9]{10}$ ]]
+          umask 077
           KEYCHAIN="$RUNNER_TEMP/signing.keychain-db"
           KC_PASS="$(uuidgen)"
-          echo "$P12" | base64 --decode > "$RUNNER_TEMP/cert.p12"
+          trap 'rm -f "$RUNNER_TEMP/cert.p12"' EXIT
+          printf '%s' "$P12" | base64 --decode > "$RUNNER_TEMP/cert.p12"
           security create-keychain -p "$KC_PASS" "$KEYCHAIN"
           security set-keychain-settings -lut 21600 "$KEYCHAIN"
           security unlock-keychain -p "$KC_PASS" "$KEYCHAIN"
-          security import "$RUNNER_TEMP/cert.p12" -P "$P12_PASSWORD" -A -t cert -f pkcs12 -k "$KEYCHAIN"
-          security set-key-partition-list -S apple-tool:,apple: -k "$KC_PASS" "$KEYCHAIN" >/dev/null
-          security list-keychains -d user -s "$KEYCHAIN" $(security list-keychains -d user | tr -d '"')
-          rm "$RUNNER_TEMP/cert.p12"
+          security import "$RUNNER_TEMP/cert.p12" -P "$P12_PASSWORD" -T /usr/bin/codesign -t cert -f pkcs12 -k "$KEYCHAIN"
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KC_PASS" "$KEYCHAIN" >/dev/null
+          SIGN_ID="$(security find-identity -v -p codesigning "$KEYCHAIN" | awk -v team="$APPLE_TEAM_ID" \
+            '/"Developer ID Application: / && index($0, "(" team ")\"") { print $2 }')"
+          if [[ ! "$SIGN_ID" =~ ^[A-Fa-f0-9]{40}$ ]]; then
+            echo "::error::Import exactly one valid Developer ID Application identity for APPLE_TEAM_ID."
+            exit 1
+          fi
+          echo "SIGN_ID=$SIGN_ID" >> "$GITHUB_ENV"
+          echo "SIGN_KEYCHAIN=$KEYCHAIN" >> "$GITHUB_ENV"
+          echo "SIGN_TEAM_ID=$APPLE_TEAM_ID" >> "$GITHUB_ENV"
 
       - name: Notary credentials
         env:
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
           APPLE_APP_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
-        if: env.APPLE_ID != ''
         run: |
-          xcrun notarytool store-credentials ci --apple-id "$APPLE_ID" --team-id "$APPLE_TEAM_ID" \
-            --password "$APPLE_APP_PASSWORD"
+          set -euo pipefail
+          : "${APPLE_ID:?APPLE_ID is required}"
+          : "${APPLE_APP_PASSWORD:?APPLE_APP_PASSWORD is required}"
+          xcrun notarytool store-credentials ci --keychain "$SIGN_KEYCHAIN" \
+            --apple-id "$APPLE_ID" --team-id "$APPLE_TEAM_ID" --password "$APPLE_APP_PASSWORD"
           echo "NOTARY_PROFILE=ci" >> "$GITHUB_ENV"
 
       - name: Build DMG
@@ -102,7 +117,11 @@ jobs:
 
       - name: Clean up keychain
         if: always()
-        run: security delete-keychain "$RUNNER_TEMP/signing.keychain-db" 2>/dev/null || true
+        run: |
+          rm -f "$RUNNER_TEMP/cert.p12"
+          if [ -f "$RUNNER_TEMP/signing.keychain-db" ]; then
+            security delete-keychain "$RUNNER_TEMP/signing.keychain-db"
+          fi
 
 
   complete-issues:
