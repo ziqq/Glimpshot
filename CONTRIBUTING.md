@@ -67,7 +67,9 @@ and run `scripts/build.sh` to regenerate it.
 
 1. Bump `CFBundleShortVersionString` in `Resources/Info.plist` if needed (CI also stamps it from the tag).
 2. Tag and push: `git tag v0.2.0 && git push origin v0.2.0`.
-3. `.github/workflows/release.yml` builds the DMG with `scripts/make_dmg.sh` and publishes a GitHub Release.
+3. `.github/workflows/release.yml` verifies that the existing `vMAJOR.MINOR.PATCH` tag points to a commit on `main`, builds the DMG with `scripts/make_dmg.sh`, and publishes a GitHub Release.
+
+To retry a release manually, select that existing tag in **Run workflow**. Branch selections are rejected; the workflow never creates tags.
 
 For a signed and notarized build set these repository secrets:
 `DEVELOPER_ID_P12`, `DEVELOPER_ID_PASSWORD`, `APPLE_ID`, `APPLE_TEAM_ID`, `APPLE_APP_PASSWORD`.
