@@ -79,9 +79,12 @@ The P12 must be base64 encoded; its password and the Apple ID app-specific passw
 Missing credentials, a different team, rejected notarization or failed verification stop publication.
 
 The workflow imports the identity into a temporary keychain and uses its exact SHA-1 for both app and DMG.
-It verifies the app signature, hardened runtime and timestamp, submits the DMG with `notarytool --wait`,
-requires `Accepted`, saves `build/notarization-log.json`, staples and validates the DMG ticket, and checks
-Gatekeeper for both DMG and app before publishing. The temporary keychain is deleted on success or failure.
+It verifies the app signature, hardened runtime and timestamp, notarizes a ZIP of the app with
+`notarytool --wait`, requires `Accepted`, then staples and validates the app ticket. The stapled app
+passes `syspolicy_check distribution` before it is copied into the DMG. The DMG is then signed,
+notarized, stapled, validated and assessed by Gatekeeper before publication. Submission results and
+logs are saved as `build/app-notarization-*.json` and `build/dmg-notarization-*.json`.
+The temporary keychain is deleted on success or failure.
 See Apple's [notarization workflow](https://developer.apple.com/documentation/security/customizing-the-notarization-workflow).
 
 Local development remains available with `scripts/build.sh` and `scripts/make_dmg.sh`, including ad-hoc signing.

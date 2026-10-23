@@ -39,6 +39,21 @@ STAGE="$TMP/stage"
 RW="$TMP/rw.dmg"
 trap 'hdiutil detach "/Volumes/$VOLNAME" -quiet 2>/dev/null || true; rm -rf "$TMP"' EXIT
 
+# App and DMG each need their own accepted submission and saved log.
+notarize() {
+    local package="$1" receipt="$2" submit_result=0 submission_id status
+    local notary_args=(--keychain-profile "$NOTARY_PROFILE")
+    if [ -n "${SIGN_KEYCHAIN:-}" ]; then notary_args+=(--keychain "$SIGN_KEYCHAIN"); fi
+    xcrun notarytool submit "$package" "${notary_args[@]}" --wait --output-format json > "$receipt-result.json" || submit_result=$?
+    submission_id="$(plutil -extract id raw -o - "$receipt-result.json")"
+    xcrun notarytool log "$submission_id" "${notary_args[@]}" "$receipt-log.json"
+    status="$(plutil -extract status raw -o - "$receipt-result.json")"
+    if [ "$submit_result" -ne 0 ] || [ "$status" != Accepted ]; then
+        echo "✗ notarization status: $status; see $receipt-log.json"
+        exit 1
+    fi
+}
+
 codesign --verify --strict --verbose=2 "$APP"
 if [ -n "$DEV_ID" ]; then
     codesign -d --extract-certificates "$TMP/signer" "$APP"
@@ -52,6 +67,16 @@ if [ -n "$DEV_ID" ]; then
     if [ -n "${SIGN_TEAM_ID:-}" ]; then
         printf '%s\n' "$SIGNATURE" | grep -Fx "TeamIdentifier=$SIGN_TEAM_ID" >/dev/null
     fi
+fi
+
+if [ -n "${NOTARY_PROFILE:-}" ]; then
+    echo "→ notarizing app"
+    ditto -c -k --keepParent "$APP" "$TMP/$NAME.zip"
+    notarize "$TMP/$NAME.zip" "build/app-notarization"
+    xcrun stapler staple "$APP"
+    xcrun stapler validate "$APP"
+    codesign --verify --strict --verbose=2 "$APP"
+    syspolicy_check distribution "$APP"
 fi
 
 echo "→ staging"
@@ -109,29 +134,18 @@ hdiutil convert -quiet "$RW" -format ULFO -o "$DMG"
 hdiutil verify "$DMG"
 if [ -n "$DEV_ID" ]; then
     SIGN_ARGS=(--force --timestamp --sign "$DEV_ID")
-    NOTARY_ARGS=(--keychain-profile "${NOTARY_PROFILE:-}")
     if [ -n "${SIGN_KEYCHAIN:-}" ]; then
         SIGN_ARGS+=(--keychain "$SIGN_KEYCHAIN")
-        NOTARY_ARGS+=(--keychain "$SIGN_KEYCHAIN")
     fi
     codesign "${SIGN_ARGS[@]}" "$DMG"
     codesign --verify --strict --verbose=2 "$DMG"
     if [ -n "${NOTARY_PROFILE:-}" ]; then
-        echo "→ notarizing"
-        SUBMIT_RESULT=0
-        xcrun notarytool submit "$DMG" "${NOTARY_ARGS[@]}" --wait --output-format json > "build/notarization-result.json" || SUBMIT_RESULT=$?
-        SUBMISSION_ID="$(plutil -extract id raw -o - "build/notarization-result.json")"
-        xcrun notarytool log "$SUBMISSION_ID" "${NOTARY_ARGS[@]}" "build/notarization-log.json"
-        STATUS="$(plutil -extract status raw -o - "build/notarization-result.json")"
-        if [ "$SUBMIT_RESULT" -ne 0 ] || [ "$STATUS" != Accepted ]; then
-            echo "✗ notarization status: $STATUS; see build/notarization-log.json"
-            exit 1
-        fi
+        echo "→ notarizing DMG"
+        notarize "$DMG" "build/dmg-notarization"
         xcrun stapler staple "$DMG"
         xcrun stapler validate "$DMG"
         codesign --verify --strict --verbose=2 "$DMG"
         spctl --assess --type open --context context:primary-signature --verbose=2 "$DMG"
-        spctl --assess --type execute --verbose=2 "$APP"
     else
         echo "  (set NOTARY_PROFILE to notarize)"
     fi
