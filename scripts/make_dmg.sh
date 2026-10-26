@@ -15,15 +15,15 @@ cd "$(dirname "$0")/.."
 NAME="Glimpshot"
 APP="build/$NAME.app"
 
-# Distribution signing must use an explicitly selected identity, never the first certificate on the Mac.
+# Local signing settings are handled by build.sh. An explicit certificate SHA-1
+# selects Developer ID validation and DMG signing, never the first certificate on the Mac.
 DEV_ID=""
-if [ -n "${SIGN_ID:-}" ]; then
-    [[ "$SIGN_ID" =~ ^[A-Fa-f0-9]{40}$ ]] || { echo "✗ SIGN_ID must be a certificate SHA-1"; exit 1; }
+if [[ "${SIGN_ID:-}" =~ ^[A-Fa-f0-9]{40}$ ]]; then
     DEV_ID="$(security find-identity -v -p codesigning ${SIGN_KEYCHAIN:+"$SIGN_KEYCHAIN"} | awk -v id="$SIGN_ID" \
         '$2 == id && /"Developer ID Application: / { print $2 }')"
 fi
 if [ -n "${NOTARY_PROFILE:-}" ]; then
-    [ -n "$DEV_ID" ] || { echo "✗ notarization requires an explicit Developer ID Application identity"; exit 1; }
+    [ -n "$DEV_ID" ] || { echo "✗ notarization requires a Developer ID Application certificate SHA-1 in SIGN_ID"; exit 1; }
     [[ "${SIGN_TEAM_ID:-}" =~ ^[A-Z0-9]{10}$ ]] || { echo "✗ SIGN_TEAM_ID is required for notarization"; exit 1; }
     security find-identity -v -p codesigning ${SIGN_KEYCHAIN:+"$SIGN_KEYCHAIN"} | awk -v id="$DEV_ID" -v team="$SIGN_TEAM_ID" \
         '$2 == id && index($0, "(" team ")\"") { found=1 } END { exit !found }'
