@@ -47,14 +47,20 @@ fi
 SIGN_ID="${SIGN_ID:-}"
 if [ -n "$SIGN_ID" ]; then
     echo "→ signing with: $SIGN_ID"
-    # Developer ID builds get a secure timestamp (required for notarization).
-    TS=""
-    if security find-identity -v -p codesigning | grep -F "$SIGN_ID" | grep -q "Developer ID"; then TS="--timestamp"; fi
-    codesign --force --options runtime $TS --sign "$SIGN_ID" "$APP"
+    # An explicit keychain keeps CI signing isolated from other installed identities.
+    SIGN_ARGS=(--force --options runtime --sign "$SIGN_ID")
+    if [ -n "${SIGN_KEYCHAIN:-}" ]; then
+        SIGN_ARGS+=(--keychain "$SIGN_KEYCHAIN")
+    fi
+    if security find-identity -v -p codesigning ${SIGN_KEYCHAIN:+"$SIGN_KEYCHAIN"} | grep -F "$SIGN_ID" | grep -q "Developer ID Application"; then
+        SIGN_ARGS+=(--timestamp)
+    fi
+    codesign "${SIGN_ARGS[@]}" "$APP"
 else
     echo "→ no signing identity (set SIGN_NAME or scripts/.sign-identity), signing ad-hoc"
     codesign --force --sign - "$APP"
 fi
+codesign --verify --strict --verbose=2 "$APP"
 
 if [ "${1:-}" = "--install" ]; then
     pkill -x Glimpshot 2>/dev/null || true
