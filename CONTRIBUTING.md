@@ -71,25 +71,29 @@ and run `scripts/build.sh` to regenerate it.
 
 To retry a release manually, select that existing tag in **Run workflow**. Branch selections are rejected; the workflow never creates tags.
 
-GitHub releases require these secrets in the protected `release` environment:
-`DEVELOPER_ID_P12`, `DEVELOPER_ID_PASSWORD`, `APPLE_ID`, `APPLE_TEAM_ID`, `APPLE_APP_PASSWORD`.
+GitHub releases can be published without distribution credentials; the app is then signed ad-hoc.
+To enable Developer ID signing, set `DEVELOPER_ID_P12`, `DEVELOPER_ID_PASSWORD` and `APPLE_TEAM_ID`
+in the protected `release` environment. To also enable notarization, set `APPLE_ID` and `APPLE_APP_PASSWORD`.
 `DEVELOPER_ID_P12` must contain exactly one valid **Developer ID Application** identity and its private key
 for the repository owner's `APPLE_TEAM_ID`. Apple Development certificates cannot notarize releases.
 The P12 must be base64 encoded; its password and the Apple ID app-specific password remain secrets.
-Missing credentials, a different team, rejected notarization or failed verification stop publication.
+Missing or invalid credentials for an enabled path, a different team, rejected notarization or failed
+verification stop publication.
 
-The workflow imports the identity into a temporary keychain and uses its exact SHA-1 for both app and DMG.
-It verifies the app signature, hardened runtime and timestamp, notarizes a ZIP of the app with
+When Developer ID signing is enabled, the workflow imports the identity into a temporary keychain and
+uses its exact SHA-1 for both app and DMG. It verifies the app signature, hardened runtime and timestamp.
+When notarization is enabled, it notarizes a ZIP of the app with
 `notarytool --wait`, requires `Accepted`, then staples and validates the app ticket. The stapled app
 passes `syspolicy_check distribution` before it is copied into the DMG. The DMG is then signed,
 notarized, stapled, validated and assessed by Gatekeeper. A final read-only mount verifies the signature,
 stapled ticket and distribution assessment of the app inside the finished DMG before publication.
 Submission results and logs are saved as `build/app-notarization-*.json` and `build/dmg-notarization-*.json`.
 These JSON receipts are retained as a workflow artifact for 30 days, including failed submissions.
-The temporary keychain is deleted on success or failure.
+The temporary keychain, when created, is deleted on success or failure.
 See Apple's [notarization workflow](https://developer.apple.com/documentation/security/customizing-the-notarization-workflow).
 
 Local development remains available with `scripts/build.sh` and `scripts/make_dmg.sh`, including ad-hoc signing.
+Both scripts accept `SIGN_NAME`, `scripts/.sign-identity` and `SIGN_ID=<sha1 or name>` for local app signing.
 Distribution signing never picks another identity automatically. To notarize locally, explicitly set
 `SIGN_ID=<certificate-sha1> SIGN_TEAM_ID=<team-id> NOTARY_PROFILE=<profile>`; create the profile first with
 `xcrun notarytool store-credentials`. Set `SIGN_KEYCHAIN=<path>` if the certificate/profile uses a separate keychain.
